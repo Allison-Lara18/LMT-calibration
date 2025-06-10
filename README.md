@@ -8,7 +8,6 @@ Repository of my MITACS summer internship at Université du Québec à Montréal
 Twenty years ago, Landwehr, Hall & Frank (2005) suggested combining two schemes, classification trees and regressions on categorical variables (logistic regression in particular) into "model trees," that is, trees whose leaves contain linear regression functions.  
 The goal of the project is to revisit this idea, particularly from the perspective of calibration, and to see if these trees can be combined in ensemble approaches to improve predictive power.  
 The goal will be to implement the algorithms (in R or python), and to use it on various datasets.  
-Landwehr, N., Hall, M., & Frank, E. (2005). Logistic model trees. Machine Learning, 59, 161-205.
 
 ### References
  - Landwehr, N., Hall, M., \& Frank, E. (2005). Logistic model trees. Machine Learning, 59, 161-205- Gruber, S. G., Buettner, F. (2022). 
