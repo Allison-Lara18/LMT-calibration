@@ -1,5 +1,5 @@
 # Logistic Model Trees
-## Landwehr, N., Hall, M., & Frank, E. (2005). 
+**Landwehr, N., Hall, M., & Frank, E. (2005).**
 
 The paper proposes **Logistic Model Trees (LMT)** – a hybrid that merges the low-bias flexibility of decision-tree structures with the probabilistic outputs of **multinomial logistic regression**.  Instead of linear-regression models at the leaves (as in Quinlan's M5), LMT places a logistic regression model in each leaf, giving class probabilities and a single interpretable tree instead of one tree per class.
 
@@ -33,10 +33,10 @@ The paper switches to a model that directly predicts posterior probabilities.  F
 Because maximum-likelihood estimates of the β-coefficients have no algebraic solution and it is necessary to use a numerical method, the authors adopt **LogitBoost**. This  is a boosting algorithm designed to fit logistic-regression models by adding one weak learner at a time instead of solving all coefficients in one shot. It minimises the negative log-likelihood
 
 
-*2.3.1 Attribute selection.*
+*2.3.1 Attribute selection.*  
 LogitBoost can fit a whole logistic model in one go, including every predictor, but the authors deliberately slow the process down so that it adds only one attribute at a time. In each boosting round they fit a simple least-squares regression that involves just a single candidate attribute, pick the one that minimises squared error, and append that term to the model. Because any full (multiple) logistic regression can be written as a sum of these simple terms, running LogitBoost to full convergence would eventually rebuild the same complete model; the trick is to stop early—with the number of rounds chosen by 5-fold cross-validation—so only the attributes that genuinely improve validation accuracy ever make it in. This is called **SimpleLogistic**.
 
-*2.3.2 Nominal attributes & missing values.*
+*2.3.2 Nominal attributes & missing values.*  
 Nominals are binarised (one-hot encoding). Missing values are imputed once with mean for numerical values and mode for categorical values before any tree building.
 
 ---
@@ -58,7 +58,14 @@ A concise explaination of all the algorithms that LMT is going to be compared wi
 
 #### 4.1 The model
 
-Formal definition: a conventional tree partitions the instance space, but each leaf *t* carries its own logistic model $F_j^{(t)}(x)$.  Stand-alone logistic regression is the degenerate case when the tree is pruned to the root; an ordinary decision tree is the opposite extreme where every $F$ has no terms .
+In an ordinary decision tree each inner node asks a question about one attribute and sends the instance down a branch, ergo, each leaf predicts a class. LMT keeps this tree skeleton but replaces every leaf’s single class label with a **local multinomial logistic-regression model**. Formally, the tree's splits carve the instance space into disjoint regions $S_t$; inside a region the leaf model $f_t(x)$ computes class probabilities with a linear log-odds formula that may use only a subset of the original attributes, chosen by the attribute-selection routine described earlier.
+
+Because both extremes are included, LMT can adapt its complexity:
+
+* If the best bias-variance trade-off is a single global model, the tree is pruned back to the root and you just get standard logistic regression.
+* If the data demand more nuance, the algorithm keeps some splits, fitting progressively refined logistic models on the smaller subsets beneath them.
+* A plain decision tree is the opposite limiting case where every leaf’s attribute set is empty (i.e., the leaf just holds a majority class).
+
 
 #### 4.2 Building LMTs
 
@@ -66,10 +73,10 @@ Key algorithm steps:
 
 1. **Root model.**  Fit a SimpleLogistic model with LogitBoost + 5-fold CV.
 2. **Split test.**  Evaluate candidate splits with the regular C4.5 information-gain measure (they tried LogitBoost-response-based splits; gains were negligible).
-3. **Child models.**  *Resume LogitBoost* in each child, starting from the parent’s coefficients and CV-choosing extra iterations. This “incremental refinement” reuses global effects and only adds local terms.
+3. **Child models.**  Resume LogitBoost in each child, starting from the parent’s coefficients and CV-choosing extra iterations. This “incremental refinement” reuses global effects and only adds local terms.
 4. **Stopping.**  Don’t split if fewer than 15 instances or no gain, or if too few cases to cross-validate.
 5. **Pruning.**  Use CART’s cost-complexity pruning with 10-fold CV to trade training error against (tree size × penalty) .
-6. **Missing/nominal handling.**  Same global imputation; nominal-to-binary done *locally* at each node.
+6. **Missing/nominal handling.**  Same global imputation; nominal-to-binary (one-hot encoding) done locally at each node.
 
 #### 4.3 Complexity & Speed-up heuristics
 
@@ -83,8 +90,8 @@ Full LogitBoost + nested CV is slow.  Two heuristics help:
 
 ### 5  Experiments
 
-* **Datasets.**  36 diverse UCI sets (57–20 000 rows) with stratified 10×10-CV and a corrected resampled *t*-test .
-* **Competitors.**  C4.5, CART, Simple & full logistic, NBTree, Lotus, LTree, M5’(classification), AdaBoost(10/100) + C4.5, etc.&#x20;
+* **Datasets.**  36 diverse UCI sets (57–20 000 rows) with stratified 10×10-CV and a corrected resampled $t$-test .
+* **Competitors.**  C4.5, CART, Simple & full logistic, NBTree, Lotus, LTree, M5’(classification), AdaBoost(10/100) + C4.5, etc.
 * **Key findings.**
 
   * LMT **never loses significantly** to any base learner; often wins (e.g., 16 datasets vs C4.5) .
@@ -92,8 +99,6 @@ Full LogitBoost + nested CV is slow.  Two heuristics help:
   * Outperforms or matches NBTree, LTree and Lotus on most sets .
   * Competitive with boosted trees: wins on some, loses on others, but with a simpler single-tree explanation.
   * Variable-selection SimpleLogistic beats full logistic in accuracy on many sets.
-
-Figures 9–11 (see PDF) visualise runtime curves, learning-curve behaviour and tree-size adaptation.
 
 ---
 
@@ -105,9 +110,7 @@ Figures 9–11 (see PDF) visualise runtime curves, learning-curve behaviour and 
 
 ---
 
-## Putting it all together
-
-**What you should remember**
+## Summary
 
 | Concept                          | Why it matters                                                                                            |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -117,4 +120,3 @@ Figures 9–11 (see PDF) visualise runtime curves, learning-curve behaviour and 
 | **Empirical win profile**        | Beats single trees and logistic regression; trades roughly evenly with boosted trees while being simpler. |
 | **Speed vs. accuracy trade-off** | Nested CV and many LogitBoost rounds cost time; heuristics mitigate this without hurting performance.     |
 
-Armed with this map, you should be able to navigate any equation, table or claim in the original PDF with confidence.
