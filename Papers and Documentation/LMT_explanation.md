@@ -28,9 +28,9 @@ Although this works mechanically, it has two big flaws.  First, the scores are r
 
 #### 2.3 Logistic regression
 
-The paper switches to a model that directly predicts posterior probabilities.  For a J-class problem it defines J – 1 log-odds against a chosen base class, giving probabilities that are guaranteed to add to one and stay between zero and one .
+The paper switches to a model that directly predicts posterior probabilities.  For a J-class problem it defines J – 1 log-odds against a chosen base class, giving probabilities that are guaranteed to add to one and stay between zero and one.
 
-Because maximum-likelihood estimates of the β-coefficients have no algebraic solution and it is necessary to use a numerical method, the authors adopt **LogitBoost**. This  is a boosting algorithm designed to fit logistic-regression models by adding one weak learner at a time instead of solving all coefficients in one shot. It minimises the negative log-likelihood
+Because maximum-likelihood estimates of the $β$-coefficients have no algebraic solution and it is necessary to use a numerical method, the authors adopt **LogitBoost**. This  is a boosting algorithm designed to fit logistic-regression models by adding one weak learner at a time instead of solving all coefficients in one shot. It minimises the negative log-likelihood.
 
 
 *2.3.1 Attribute selection.*  
@@ -73,9 +73,9 @@ Key algorithm steps:
 
 1. **Root model.**  Fit a SimpleLogistic model with LogitBoost + 5-fold CV.
 2. **Split test.**  Evaluate candidate splits with the regular C4.5 information-gain measure (they tried LogitBoost-response-based splits; gains were negligible).
-3. **Child models.**  Resume LogitBoost in each child, starting from the parent’s coefficients and CV-choosing extra iterations. This “incremental refinement” reuses global effects and only adds local terms.
+3. **Child models.**  Resume LogitBoost in each child, starting from the parent’s coefficients and CV-choosing extra iterations. This incremental refinement reuses global effects and only adds local terms.
 4. **Stopping.**  Don’t split if fewer than 15 instances or no gain, or if too few cases to cross-validate.
-5. **Pruning.**  Use CART’s cost-complexity pruning with 10-fold CV to trade training error against (tree size × penalty) .
+5. **Pruning.**  Use CART's cost-complexity pruning with 10-fold CV to trade training error against (tree size × penalty) .
 6. **Missing/nominal handling.**  Same global imputation; nominal-to-binary (one-hot encoding) done locally at each node.
 
 #### 4.3 Complexity & Speed-up heuristics
@@ -119,4 +119,3 @@ Full LogitBoost + nested CV is slow.  Two heuristics help:
 | **CART cost-complexity pruning** | Lets the tree collapse to a single logistic model when that’s best.                                       |
 | **Empirical win profile**        | Beats single trees and logistic regression; trades roughly evenly with boosted trees while being simpler. |
 | **Speed vs. accuracy trade-off** | Nested CV and many LogitBoost rounds cost time; heuristics mitigate this without hurting performance.     |
-
