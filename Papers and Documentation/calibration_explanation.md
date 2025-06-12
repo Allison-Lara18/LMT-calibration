@@ -48,7 +48,7 @@ This means that, whenever your model says "probability = p", roughly 30% of thos
   * Formula  
     $\text{ECE}= \sum_{b=1}^{B}\frac{n_b}{n}\, \bigl|\text{acc}(b)-\text{conf}(b)\bigr|$  
 
-    *$n_b$=points in bin, $n$=total points.*
+    $n_b$=points in bin, $n$=total points.
   * Meaning: Average absolute gap between what the model predicts and what actually happens.
   * Caveat: The value changes if you change the number of bins $B$.
 
@@ -68,8 +68,7 @@ This means that, whenever your model says "probability = p", roughly 30% of thos
   * Formula  
     $\text{LCS}= \sum_{i=1}^{N} w_i\bigl[\hat g(l_i)-l_i\bigr]^2$  
 
-    *$l_i$=grid points, $\hat g(l_i)$=smoothed curve,
-    $w_i$=how common scores are near $l_i$.*
+    $l_i$=grid points, $\hat g(l_i)$=smoothed curve, $w_i$=how common scores are near $l_i$.
   * Meaning: Squared distance between the smooth curve and the perfect 45° line, weighted by how often the model predicts each score. No bins, gives both a curve and a single number.
 
 
@@ -117,8 +116,6 @@ It is ideally to track one discrimination metric (e.g., AUC) plus one calibratio
 | **Isotonic regression**              | Monotone step function                         | Data-rich (>10 k) and you want maximum flexibility.       |
 | **Beta calibration**                 | $\text{BetaCDF}(\hat s; a,b)$                  | Slightly more flexible than Platt, still monotone.        |
 | **Local regression**                 | Smooth non-parametric curve                    | Need gentle, possibly non-monotone adjustment.            |
-| **Temperature scaling** (for logits) | $\sigma(z/T)$                                  | Soft-max models (deep nets) – simplest good default.      |
-| **Histogram / Bayesian binning**     | Replace score by bin prevalence (with priors). | Very small data, interpretable bins.                      |
 
 **Workflow:**
 1. Split a calibration set not used for training.

@@ -39,7 +39,7 @@ The idea is to start with the whole data set, look for the first place where the
       * The test no longer finds a meaningful change.
       * A minimum leaf size is reached.
       * The maximum depth is reached.
-    6. Return a tree object where each end-node stores its own logistic model, and the usual `predict()` and `plot()` methods work.
+   6. Return a tree object where each end-node stores its own logistic model, and the usual `predict()` and `plot()` methods work.
 
 Key takeaway: This method is *deterministic and sequential*: it tests one variable at a time, always keeps the best confirmed split, and stops when no further significant change can be detected. Builds the tree in a single pass, always choosing the most statistically evident split at every step. Good for interpretable splits and quick results.
 
