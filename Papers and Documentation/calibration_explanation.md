@@ -5,11 +5,8 @@ Classic evaluation metrics (accuracy, AUC, F1) ignore that requirement because a
 ---
 
 ### 1  What is calibration?
-A classifier is *perfectly calibrated* if
-  $$
-  \Pr\big(D=1\mid \hat{s}(x)=p\big)=p\quad\forall\,p\in[0,1]
-  $$
-
+A classifier is *perfectly calibrated* if  
+  $\Pr\big(D=1\mid \hat{s}(x)=p\big)=p\quad\forall\,p\in[0,1]$  
   where $D$ is the binary outcome and $\hat{s}(x)$ is the model raw score for instance $x$.
 
 This means that, whenever your model says "probability = p", roughly 30% of those cases should be positives in reality. Because $\hat{s}(x)=p$ is a measure-zero event, calibration is studied in bins (quantile groups) or with smoothing (local regressions).
@@ -36,14 +33,10 @@ This means that, whenever your model says "probability = p", roughly 30% of thos
     1. Split the scores into $B$ equal-size quantile bins $\mathcal B_1,\dots,\mathcal B_B$.
     2. For each bin $b$
 
-       * Confidence
-         $$
-           \text{conf}(b)=\frac{1}{n_b}\sum_{i\in\mathcal B_b}\hat s(x_i)
-         $$
-       * Accuracy
-         $$
-           \text{acc}(b)=\frac{1}{n_b}\sum_{i\in\mathcal B_b}\mathbf 1_{d_i=1}
-         $$
+       * Confidence  
+         $\text{conf}(b)=\frac{1}{n_b}\sum_{i\in\mathcal B_b}\hat s(x_i)$
+       * Accuracy  
+         $\text{acc}(b)=\frac{1}{n_b}\sum_{i\in\mathcal B_b}\mathbf 1_{d_i=1}$  
     3. Plot the points $(\text{conf}(b),\text{acc}(b))$.
   * Read-out:
     * On the 45° line ⇒ good.
@@ -52,12 +45,8 @@ This means that, whenever your model says "probability = p", roughly 30% of thos
 
 * **Expected Calibration Error (ECE)**
 
-  * Formula
-
-    $$
-      \text{ECE}= \sum_{b=1}^{B}\frac{n_b}{n}\,
-      \bigl|\text{acc}(b)-\text{conf}(b)\bigr|
-    $$
+  * Formula  
+    $\text{ECE}= \sum_{b=1}^{B}\frac{n_b}{n}\, \bigl|\text{acc}(b)-\text{conf}(b)\bigr|$  
 
     *$n_b$=points in bin, $n$=total points.*
   * Meaning: Average absolute gap between what the model predicts and what actually happens.
@@ -76,11 +65,8 @@ This means that, whenever your model says "probability = p", roughly 30% of thos
 
 * **Local Calibration Score (LCS)**
 
-  * Formula
-
-    $$
-      \text{LCS}= \sum_{i=1}^{N} w_i\bigl[\hat g(l_i)-l_i\bigr]^2
-    $$
+  * Formula  
+    $\text{LCS}= \sum_{i=1}^{N} w_i\bigl[\hat g(l_i)-l_i\bigr]^2$  
 
     *$l_i$=grid points, $\hat g(l_i)$=smoothed curve,
     $w_i$=how common scores are near $l_i$.*
@@ -97,10 +83,8 @@ It is ideally to track one discrimination metric (e.g., AUC) plus one calibratio
 
 #### Another metrics to be taken into account
   * **Brier Score**
-    * Formula
-      $$
-        \text{BS}(f) = \mathbb(E)[||f(X) - Y'||_2^2]
-      $$
+    * Formula  
+      $\text{BS}(f) = \mathbb(E)[||f(X) - Y'||_2^2]$  
       * $Y'$ is one-hot encoded $Y$.
     * Meaning: The estimator of the BS is equivalent to the mean squared error (MSE), illustrating that it does not purely capture model calibration. Can be interpreted as a comprehensive measure of model performance, simultaneously capturing model fit and calibration. If it is equals to 0, $f$ is perfectly calibrated according to this metric.
 
@@ -145,11 +129,8 @@ It is ideally to track one discrimination metric (e.g., AUC) plus one calibratio
 
 ### 6  Multiclass classifiers
 
-*Definition* generalises:
-
-$$
-\Pr(Y=c \mid \hat{\mathbf p}(x)=\mathbf p) = p_c \quad \text{for every class } c.
-$$
+*Definition* generalises:  
+$\Pr(Y=c \mid \hat{\mathbf p}(x)=\mathbf p) = p_c \quad \text{for every class } c.$  
 
 **Practical tools**
 
