@@ -50,7 +50,7 @@ A concise explaination of all the algorithms that LMT is going to be compared wi
 * **Lotus:** Builds binary logistic trees, chooses split variables via a modified χ² test to avoid bias, fits (simple or multiple) logistic models at nodes, and prunes with CART-style cost-complexity based on deviance rather than mis-classification error
 * **Functional trees (LTree):** Can insert constructed attributes with linear discriminants or logistic outputs, both as oblique split tests and as leaf predictors, then prunes each node among “keep subtree / constant leaf / functional leaf” options with C4.5’s error estimate lmt
 * **NBTree:** Decides at every node whether to split or to stop and train a local Naive Bayes; the choice is made by cross-validated accuracy, yielding trees that often outperform either standalone Naive Bayes or plain decision trees.
-**Boosting trees:** AdaBoost.M1 repeatedly re-weights data and grows many weak C4.5 trees, then combines them by a weighted vote; the committee is highly accurate but costs more training time and loses the single-tree interpretability advantage.
+* **Boosting trees:** AdaBoost.M1 repeatedly re-weights data and grows many weak C4.5 trees, then combines them by a weighted vote; the committee is highly accurate but costs more training time and loses the single-tree interpretability advantage.
 
 ---
 
