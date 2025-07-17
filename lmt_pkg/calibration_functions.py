@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.preprocessing import KBinsDiscretizer
 from matplotlib.gridspec import GridSpec
 from . import logitboost_j_implementation as logitboost
+from . import composite_tree
 
 # ------------------------------------------------ #
 # Function to compare the different depth trees    #
@@ -124,6 +125,74 @@ def plot_lmt_combined_calibration_and_hists(
     plt.show()
 
 
+# CALIBRATION CURVE FOR COMPOSITE TREES
+from sklearn.calibration import CalibrationDisplay
+from matplotlib.gridspec import GridSpec
+
+def plot_combined_calibration_and_hists_for_composites_side_by_side(
+    y_test, X_test,
+    y_test_ext, X_test_ext,
+    clfs_original, clfs_extended,
+    model_labels=["Model 0", "Model 1"],
+    n_bins=10
+):
+    """
+    Plot calibration curve and two side-by-side histograms for two CompositeTreeClassifier models.
+    """
+    fig = plt.figure(figsize=(10, 8))
+    gs = GridSpec(2, 2, figure=fig, height_ratios=[2, 1])
+
+    ax_curve = fig.add_subplot(gs[0, :])
+    ax_hist1 = fig.add_subplot(gs[1, 0])
+    ax_hist2 = fig.add_subplot(gs[1, 1])
+
+    colors = plt.get_cmap("tab10")
+
+    # --- Calibration curve ---
+    for idx, (clf_o, clf_e) in enumerate(zip(clfs_original, clfs_extended)):
+        proba_o = clf_o.predict_proba(X_test)[:, 1]
+        proba_e = clf_e.predict_proba(X_test_ext)[:, 1]
+
+        CalibrationDisplay.from_predictions(
+            y_test, proba_o, n_bins=n_bins,
+            name=f"{model_labels[idx]} - Original",
+            ax=ax_curve, color=colors(2 * idx)
+        )
+        CalibrationDisplay.from_predictions(
+            y_test_ext, proba_e, n_bins=n_bins,
+            name=f"{model_labels[idx]} - Extended",
+            ax=ax_curve, color=colors(2 * idx + 1)
+        )
+
+    ax_curve.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Perfect calibration')
+    ax_curve.set_title("Calibration Curves for Composite Trees")
+    ax_curve.set_xlabel("Mean predicted probability (Positive class: 1)")
+    ax_curve.set_ylabel("Fraction of positives")
+    ax_curve.grid(True)
+    ax_curve.legend(loc='best')
+
+    # --- First histogram (model 0 original vs extended) ---
+    proba_0o = clfs_original[0].predict_proba(X_test)[:, 1]
+    proba_0e = clfs_extended[0].predict_proba(X_test_ext)[:, 1]
+    ax_hist1.hist(proba_0o, bins=n_bins, range=(0, 1), alpha=0.7, color=colors(0), label=f"{model_labels[0]} - Original")
+    ax_hist1.hist(proba_0e, bins=n_bins, range=(0, 1), alpha=0.7, color=colors(1), label=f"{model_labels[0]} - Extended")
+    ax_hist1.set_title(f"Probability Histogram – {model_labels[0]}")
+    ax_hist1.set_xlabel("Predicted probability for class 1")
+    ax_hist1.set_ylabel("Count")
+    ax_hist1.legend()
+
+    # --- Second histogram (model 1 original vs extended) ---
+    proba_1o = clfs_original[1].predict_proba(X_test)[:, 1]
+    proba_1e = clfs_extended[1].predict_proba(X_test_ext)[:, 1]
+    ax_hist2.hist(proba_1o, bins=n_bins, range=(0, 1), alpha=0.7, color=colors(2), label=f"{model_labels[1]} - Original")
+    ax_hist2.hist(proba_1e, bins=n_bins, range=(0, 1), alpha=0.7, color=colors(3), label=f"{model_labels[1]} - Extended")
+    ax_hist2.set_title(f"Probability Histogram – {model_labels[1]}")
+    ax_hist2.set_xlabel("Predicted probability for class 1")
+    ax_hist2.set_ylabel("Count")
+    ax_hist2.legend()
+
+    fig.tight_layout()
+    plt.show()
 
 
 # ------------------------------------------------------ #
@@ -202,6 +271,7 @@ def plot_pred_vs_true(
       - if model_type=='tree': { name: clf, ... }
       - if model_type=='lmt' : { name: (clf, nodes), ... }
       - if model_type=='logitboost': { name: (learners, J), ... }
+      - if model_type=='composite': { name: (clf, nodes), ... }
     p_true: array of true probabilities, shape (n_samples,)
     X_test: feature matrix, shape (n_samples, n_features)
     model_type: 'tree', 'lmt' or 'logitboost'
@@ -228,6 +298,9 @@ def plot_pred_vs_true(
         elif model_type == 'logitboost':
             learners, J = val
             y_pred = logitboost.logitboost_predict_proba(X_in, learners, J)[:, 1]
+        elif model_type == 'composite':
+            clf, nodes = val
+            y_pred = composite_tree.predict_proba_composite_lmt(X_in, clf, nodes)[:, 1]
         else:
             raise ValueError("model_type must be 'tree', 'lmt', or 'logitboost'")
 

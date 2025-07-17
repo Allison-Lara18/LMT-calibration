@@ -15,6 +15,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 #import logitboost_j_implementation as logitboost
 from . import logitboost_j_implementation as logitboost
+from . import composite_tree
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
 from  sklearn.model_selection import cross_val_score
@@ -317,6 +318,138 @@ def fit_logistic_model_tree_v2(
     recurse(0, warm_start=None)
 
     return clf_tree, node_models
+
+# ----------------------------------- #
+# NEW PREDICTION FUNCTIONS FOR LMT    #
+# ----------------------------------- #
+from copy import deepcopy
+from collections import deque
+from scipy import sparse
+from sklearn.metrics import roc_auc_score
+
+
+def regression_pruning(
+    X_train, 
+    y_train, 
+    clf, 
+    nodes_models, 
+    threshold,
+    verbose=False,
+    multiclass=False,
+    average='macro'
+):
+    """
+    Experimental pruning method based on AUC of each submodel at each node.
+
+    Params:
+    X_train : array-like (n_samples, n_features)
+    y_train : array-like (n_samples,)
+    clf : DecisionTreeClassifier
+    nodes_models : dict
+    threshold : float, minimum AUC to keep a node
+    multiclass : bool, optional (default=False)
+    
+    Returns:
+    pruned_clf : DecisionTreeClassifier with pruned nodes
+    pruned_nodes : dict, containing models for remaining nodes
+    """
+    # 1) Clone the tree and node models
+    pruned_clf = deepcopy(clf)
+    pruned_nodes = deepcopy(nodes_models)
+    orig_nodes   = nodes_models
+
+    tree       = pruned_clf.tree_
+    children_l = tree.children_left
+    children_r = tree.children_right
+
+    # 2) Keep original children structure
+    orig_l = children_l.copy()
+    orig_r = children_r.copy()
+
+    # 3) Decision-path to assign samples at each
+    node_indicator = pruned_clf.decision_path(X_train)
+
+    # 4) BFS : Breadth-first search to traverse the tree
+    queue = deque([0])
+    while queue:
+        node = queue.popleft()
+
+        # If it's a leaf node, skip it
+        if children_l[node] == -1 and children_r[node] == -1:
+            continue
+
+        # Samples mask for this node
+        if sparse.issparse(node_indicator):
+            mask = node_indicator[:, node].toarray().ravel().astype(bool)
+        else:
+            mask = node_indicator[:, node].astype(bool)
+        Xn = X_train[mask]
+        yn = y_train[mask]
+
+        # WIP
+        if multiclass:
+            # WIP
+            perf = 0.0
+            # For multiclass, we can use roc_auc_score with average='macro'
+            if len(np.unique(yn)) < 2:
+                # If there's only one class, consider AUC=1 -> pruned
+                perf = 1.0
+            else:
+                mdl = orig_nodes[node]
+                p01 = logitboost.logitboost_predict_proba(Xn, mdl['learners'], mdl['J'])
+                perf = roc_auc_score(yn, p01, average=average)
+        else:
+            # If there's only one class, consider AUC=1 -> pruned
+            if len(np.unique(yn)) < 2:
+                perf = 1.0
+            else:
+                mdl = orig_nodes[node]
+                p01 = logitboost.logitboost_predict_proba(Xn, mdl['learners'], mdl['J'])[:, 1]
+                perf = roc_auc_score(yn, p01)
+        if verbose:
+            print(f"Node {node}: AUC = {perf:.4f} (threshold={threshold})")
+
+        # 5) If performance is below threshold, prune this node
+        if perf > threshold:
+            children_l[node] = -1
+            children_r[node] = -1
+
+            if verbose: 
+                print(f"Node {node} pruned (AUC={perf:.4f})")
+
+            # Recursive function to obtain all descendants of this node
+            def _desc(n):
+                desc = []
+                left, right = orig_l[n], orig_r[n]
+                if left != -1:
+                    desc.append(left)
+                    desc.extend(_desc(left))
+                if right != -1:
+                    desc.append(right)
+                    desc.extend(_desc(right))
+                return desc
+
+            for d in _desc(node):
+                pruned_nodes.pop(d, None)
+
+            # Print which children were pruned
+            if verbose:
+                left_child = orig_l[node]
+                right_child = orig_r[node]
+                if left_child != -1:
+                    print(f"Left child {left_child} pruned")
+                if right_child != -1:
+                    print(f"Right child {right_child} pruned")
+                
+
+        else:
+            # Do not prune this node, keep its children
+            queue.append(children_l[node])
+            queue.append(children_r[node])
+
+    return pruned_clf, pruned_nodes
+
+
 
 # ----------------------------------- #
 # Prediction                          #
@@ -667,7 +800,9 @@ def plot_decision_regions_lmt(
     y,
     clf_lmt,
     nodes_lmt,
+    tree_model='original',
     feature_pair=(0, 1),
+    show_scatter=True,
     fill_value="mean",       # "mean" | "median" | float
     grid_steps=200,
     cmap='RdYlBu',
@@ -726,7 +861,12 @@ def plot_decision_regions_lmt(
     X_grid[:, j] = grid_pts[:, 1]
 
     # 3) predict classes on the grid
-    Z_flat = predict_lmt_multiclass(X_grid, clf_lmt, nodes_lmt)
+    if tree_model == 'original':
+        # use the original fitted tree
+        Z_flat = predict_lmt_multiclass(X_grid, clf_lmt, nodes_lmt)
+    elif tree_model == 'composite':
+        Z_flat = composite_tree.predict_composite_lmt(X_grid, clf_lmt, nodes_lmt)
+    
     Z = Z_flat.reshape(xx.shape)
 
     # 4) plot the decision regions
@@ -743,7 +883,7 @@ def plot_decision_regions_lmt(
     )
 
     # 5) overlay the true points by their true label in matching colors
-    if y is not None:
+    if show_scatter:
         # use the colormap to get colors for each class
         norm = cf.norm
         cmap_used = cf.cmap
@@ -766,6 +906,9 @@ def plot_decision_regions_lmt(
                 linewidth=0.3
             )
         # ax.legend(loc='lower right')
+        handles, _ = sc.legend_elements()
+        ax.legend(handles, [f"class {c}" for c in classes], loc="lower right")
+        # ax.legend(loc='lower right')
 
     
 
@@ -773,11 +916,6 @@ def plot_decision_regions_lmt(
     ax.set_xlabel(f"Feature {i}")
     ax.set_ylabel(f"Feature {j}")
     ax.set_title(title)
-
-    # discrete legend
-    handles, _ = sc.legend_elements()
-    ax.legend(handles, [f"class {c}" for c in classes], loc="lower right")
-
 
     return ax, cf
 
@@ -882,7 +1020,9 @@ def plot_probability_surface_lmt(
     grid_steps=200,
     cmap='RdYlBu',
     ax=None,
-    title='Predicted probability surface (LMT)'
+    title='Predicted probability surface (LMT)',
+    tree_model='original',
+    show_scatter=True
 ):
     """
     Plots a 2D probability surface from your LMT model, colouring each
@@ -928,7 +1068,11 @@ def plot_probability_surface_lmt(
     base[:, j] = yy.ravel()
 
     # 3) get probs from your LMT
-    Z_flat = predict_proba_lmt_multiclass(base, clf_lmt, nodes_lmt)[:, prob_class]
+    if tree_model == 'original':
+        Z_flat = predict_proba_lmt_multiclass(base, clf_lmt, nodes_lmt)[:, prob_class]
+    elif tree_model == 'composite':
+        Z_flat = composite_tree.predict_proba_composite_lmt(base, clf_lmt, nodes_lmt)[:, prob_class]
+
     Z_flat = np.clip(Z_flat, 0, 1)  # ensure probabilities are in [0, 1]
     Z = Z_flat.reshape(xx.shape)
 
@@ -948,17 +1092,22 @@ def plot_probability_surface_lmt(
     cbar = plt.colorbar(contour, ax=ax, label=f'P(y={prob_class})')
 
     # 5) overlay the actual points, coloured by their own prob
-    point_probs = predict_proba_lmt_multiclass(X, clf_lmt, nodes_lmt)[:, prob_class]
-    point_probs = np.clip(point_probs, 0, 1)  # ensure probabilities are in [0, 1]
-    ax.scatter(
-        X[:, i], X[:, j],
-        c=point_probs,
-        cmap=cmap,
-        vmin=0, vmax=1,
-        edgecolor='k',
-        s=20,
-        alpha=0.6
-    )
+    if show_scatter:
+        if tree_model == 'original':
+            point_probs = predict_proba_lmt_multiclass(X, clf_lmt, nodes_lmt)[:, prob_class]
+        elif tree_model == 'composite':
+            point_probs = composite_tree.predict_proba_composite_lmt(X, clf_lmt, nodes_lmt)[:, prob_class]
+
+        point_probs = np.clip(point_probs, 0, 1)  # ensure probabilities are in [0, 1]
+        ax.scatter(
+            X[:, i], X[:, j],
+            c=point_probs,
+            cmap=cmap,
+            vmin=0, vmax=1,
+            edgecolor='k',
+            s=20,
+            alpha=0.6
+        )
 
     # 6) labels & title
     ax.set_xlabel(f'Feature {i}')
