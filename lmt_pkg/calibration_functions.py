@@ -258,6 +258,7 @@ def plot_scatter_by_quantile(
 # ----------------------------------------- #
 # Predicted vs True probabilty plot         #
 # ----------------------------------------- #
+from . import spline_splitting as spline
 def plot_pred_vs_true(
     models: dict,
     p_true: np.ndarray,
@@ -272,6 +273,7 @@ def plot_pred_vs_true(
       - if model_type=='lmt' : { name: (clf, nodes), ... }
       - if model_type=='logitboost': { name: (learners, J), ... }
       - if model_type=='composite': { name: (clf, nodes), ... }
+      - if model_type=='spline_lmt': { name: (clf, nodes), ... }
     p_true: array of true probabilities, shape (n_samples,)
     X_test: feature matrix, shape (n_samples, n_features)
     model_type: 'tree', 'lmt' or 'logitboost'
@@ -301,6 +303,12 @@ def plot_pred_vs_true(
         elif model_type == 'composite':
             clf, nodes = val
             y_pred = composite_tree.predict_proba_composite_lmt(X_in, clf, nodes)[:, 1]
+        elif model_type == 'spline_tree':
+            clf = val
+            y_pred = spline.predict_proba(X_in, clf)[:, 1]
+        elif model_type == 'spline_lmt':
+            clf, nodes = val
+            y_pred = spline.predict_proba_lmt_custom(X_in, clf, nodes)[:, 1]
         else:
             raise ValueError("model_type must be 'tree', 'lmt', or 'logitboost'")
 
