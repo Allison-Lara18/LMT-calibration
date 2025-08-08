@@ -70,13 +70,20 @@ def compute_auc(model, X, y):
         return 1
     return roc_auc_score(y, prob)
 
+def compute_brier_score(model, X, y):
+    """Computes Brier score given model and input"""
+    prob = model.predict_proba(X)[:, 1]
+    return np.mean((y - prob) ** 2)
+
 # ------------------------
 # Recursive Tree Builder
 # ------------------------
 
 def grow_spline_tree(X, y, features, depth=0,
                      max_depth=3, min_samples_leaf=10,
-                     purity_threshold=0.95, verbose=False, node_id_counter=[0]):
+                     purity_threshold=0.95, 
+                     metric='auc',
+                     verbose=False, node_id_counter=[0]):
     """
     node_id_counter : list of 1 element acting as mutable counter (default [0])
     """
@@ -88,8 +95,13 @@ def grow_spline_tree(X, y, features, depth=0,
         node_id_counter[0] += 1
         return LeafNode(y, node_id)
 
-    # Initialize best AUC and split
-    best_auc = -np.inf
+    # Initialize best metric and split
+    if metric == 'auc':
+        best_metric = -np.inf
+
+    if metric == 'brier':
+        best_metric = np.inf
+
     best_split = None
 
     # Iterate over features and potential splits
@@ -121,24 +133,45 @@ def grow_spline_tree(X, y, features, depth=0,
                 continue
             
             # Compute AUC for left and right splits
-            auc_L = compute_auc(model, X_model[mask_left], y[mask_left])
-            auc_R = compute_auc(model, X_model[mask_right], y[mask_right])
-            weighted_auc = (mask_left.sum() / n) * auc_L + (mask_right.sum() / n) * auc_R
+            if metric == 'auc':
+                metric_L = compute_auc(model, X_model[mask_left], y[mask_left])
+                metric_R = compute_auc(model, X_model[mask_right], y[mask_right])
+                weighted_metric = (mask_left.sum() / n) * metric_L + (mask_right.sum() / n) * metric_R
 
-            if verbose:
-                print(f"Feature {feature}, tau = {tau:.2f}, AUC_L = {auc_L:.3f}, AUC_R = {auc_R:.3f}, Weighted AUC = {weighted_auc:.3f}")
+                if verbose:
+                    print(f"Feature {feature}, tau = {tau:.2f}, AUC_L = {metric_L:.3f}, AUC_R = {metric_R:.3f}, Weighted AUC = {weighted_metric:.3f}")
 
-            # Update best split if this one is better
-            if weighted_auc > best_auc:
-                best_auc = weighted_auc
-                best_split = {
-                    'feature': feature,
-                    'tau': tau,
-                    'X_left': X[mask_left],
-                    'y_left': y[mask_left],
-                    'X_right': X[mask_right],
-                    'y_right': y[mask_right]
-                }
+                # Update best split if this one is better
+                if weighted_metric > best_metric:
+                    best_metric = weighted_metric
+                    best_split = {
+                        'feature': feature,
+                        'tau': tau,
+                        'X_left': X[mask_left],
+                        'y_left': y[mask_left],
+                        'X_right': X[mask_right],
+                        'y_right': y[mask_right]
+                    }
+
+            elif metric == 'brier':
+                metric_L = compute_brier_score(model, X_model[mask_left], y[mask_left])
+                metric_R = compute_brier_score(model, X_model[mask_right], y[mask_right])
+                weighted_metric = (mask_left.sum() / n) * metric_L + (mask_right.sum() / n) * metric_R
+
+                if verbose:
+                    print(f"Feature {feature}, tau = {tau:.2f}, Brier_L = {metric_L:.3f}, Brier_R = {metric_R:.3f}, Weighted Brier = {weighted_metric:.3f}")
+                
+                # Update best split if this one is better (lower Brier is better)
+                if weighted_metric < best_metric:
+                    best_metric = weighted_metric
+                    best_split = {
+                        'feature': feature,
+                        'tau': tau,
+                        'X_left': X[mask_left],
+                        'y_left': y[mask_left],
+                        'X_right': X[mask_right],
+                        'y_right': y[mask_right]
+                    }
 
     # If no valid split found, return a leaf node
     if best_split is None:
@@ -149,10 +182,10 @@ def grow_spline_tree(X, y, features, depth=0,
     
     # Recursively grow left and right subtrees
     left_node = grow_spline_tree(best_split['X_left'], best_split['y_left'], features,
-                                  depth + 1, max_depth, min_samples_leaf, purity_threshold, verbose, node_id_counter)
+                                  depth + 1, max_depth, min_samples_leaf, purity_threshold, metric=metric, verbose=verbose, node_id_counter=node_id_counter)
     right_node = grow_spline_tree(best_split['X_right'], best_split['y_right'], features,
-                                   depth + 1, max_depth, min_samples_leaf, purity_threshold, verbose, node_id_counter)
-    
+                                   depth + 1, max_depth, min_samples_leaf, purity_threshold, metric=metric, verbose=verbose, node_id_counter=node_id_counter)
+
     # Use the current node_id_counter to create a decision node
     node_id = node_id_counter[0]
     node_id_counter[0] += 1
@@ -427,6 +460,7 @@ def fit_logistic_model_tree_custom(
     max_depth=3,
     min_samples_leaf=10,
     purity_threshold=0.95,
+    metric='auc',
     verbose=False,
     lb_n_estimators=200,
     lb_eps=1e-5,
@@ -463,6 +497,7 @@ def fit_logistic_model_tree_custom(
         max_depth=max_depth,
         min_samples_leaf=min_samples_leaf,
         purity_threshold=purity_threshold,
+        metric=metric,
         verbose=verbose,
         node_id_counter=node_counter
     )
@@ -1032,6 +1067,291 @@ def regression_pruning_spline_bfs(
 
     return pruned_root, pruned_node_models
 
+
+# ---------------------------------------------------------------- #
+# NEW                                                              #
+# Gain regression pruning and cross-validation for selecting delta #
+# ---------------------------------------------------------------- #
+from copy import deepcopy
+from collections import deque
+import numpy as np
+from sklearn.metrics import roc_auc_score, log_loss, brier_score_loss
+from sklearn.model_selection import KFold
+
+# def regression_pruning_gain(
+#     X, y, root_node, node_models, delta,
+#     multiclass=False, average='macro', verbose=False
+# ):
+#     """
+#     Prunes a tree using AUC gain criterion: prune node if AUC_subtree - AUC_leaf < delta.
+
+#     Parameters
+#     ----------
+#     X : ndarray of shape (n_samples, n_features)
+#     y : ndarray of shape (n_samples,)
+#     root_node : Node (custom tree)
+#     node_models : dict, node_id → model info
+#     delta : float, minimum AUC gain required to keep a node
+#     multiclass : bool
+#     average : str, average type for multiclass AUC
+#     verbose : bool
+
+#     Returns
+#     -------
+#     pruned_root : Node
+#     pruned_node_models : dict, pruned node models
+#     """
+#     # Deepcopy to avoid modifying original
+#     pruned_root = deepcopy(root_node)
+#     pruned_node_models = deepcopy(node_models)
+    
+#     sample_masks = get_sample_to_node_mask(pruned_root, X)
+
+#     queue = deque([(pruned_root, None, None)])
+
+#     while queue:
+#         node, parent, is_left = queue.popleft()
+#         if node is None or node.is_leaf:
+#             continue
+
+#         node_id = node.node_id
+#         mask = sample_masks.get(node_id, np.zeros(len(y), dtype=bool))
+#         X_node, y_node = X[mask], y[mask]
+
+#         # Skip if too few samples or only one class
+#         if len(np.unique(y_node)) < 2 or len(y_node) < 5:
+#             queue.append((node.left, node, True))
+#             queue.append((node.right, node, False))
+#             continue
+
+#         model_info = pruned_node_models[node_id]
+#         learners = model_info['learners']
+#         J = model_info['J']
+#         p_subtree = logitboost.logitboost_predict_proba(X_node, learners, J)
+#         auc_subtree = roc_auc_score(y_node, p_subtree if multiclass else p_subtree[:, 1],
+#                                     average=average if multiclass else 'macro')
+
+#         # Compute collapsed model (leaf)
+#         collapsed_leaf = LeafNode(y_node, node_id=node_id)
+#         p_leaf = np.tile(np.mean(y_node), (len(y_node), 2)) if not multiclass else p_subtree
+#         auc_leaf = roc_auc_score(y_node, p_leaf if multiclass else p_leaf[:, 1],
+#                                  average=average if multiclass else 'macro')
+
+#         gain = auc_subtree - auc_leaf
+
+#         if verbose:
+#             print(f"[Node {node_id}] AUC_subtree={auc_subtree:.4f}, AUC_leaf={auc_leaf:.4f}, Gain={gain:.4f}")
+
+#         if gain < delta:
+#             # Replace with leaf node
+#             if verbose:
+#                 print(f"→ Pruning node {node_id} (Gain={gain:.4f} < delta={delta})")
+#             new_leaf = collapsed_leaf
+#             if parent is None:
+#                 pruned_root = new_leaf
+#             else:
+#                 if is_left:
+#                     parent.left = new_leaf
+#                 else:
+#                     parent.right = new_leaf
+
+#             if node.left:
+#                 pruned_node_models.pop(node.left.node_id, None)
+#             if node.right:
+#                 pruned_node_models.pop(node.right.node_id, None)
+#         else:
+#             queue.append((node.left, node, True))
+#             queue.append((node.right, node, False))
+
+#     return pruned_root, pruned_node_models
+
+# Re-import necessary modules after reset
+from copy import deepcopy
+from collections import deque
+import numpy as np
+from sklearn.metrics import roc_auc_score
+
+def regression_pruning_gain_local(
+    X, y, root_node, node_models, delta,
+    multiclass=False, average='macro', verbose=False
+):
+    """
+    Prunes a tree using local AUC gain from splitting: compares parent vs. weighted AUC of children.
+    If the weighted AUC of the children does not improve over the parent by at least delta, prune.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+    y : ndarray of shape (n_samples,)
+    root_node : Node (custom tree)
+    node_models : dict, node_id → model info
+    delta : float, minimum AUC gain required to keep a split
+    multiclass : bool
+    average : str
+    verbose : bool
+
+    Returns
+    -------
+    pruned_root : Node
+    pruned_node_models : dict, pruned node models
+    """
+    pruned_root = deepcopy(root_node)
+    pruned_node_models = deepcopy(node_models)
+    sample_masks = get_sample_to_node_mask(pruned_root, X)
+    queue = deque([(pruned_root, None, None)])
+
+    while queue:
+        node, parent, is_left = queue.popleft()
+        if node is None or node.is_leaf:
+            continue
+
+        node_id = node.node_id
+        mask = sample_masks.get(node_id, np.zeros(len(y), dtype=bool))
+        X_node, y_node = X[mask], y[mask]
+
+        if len(np.unique(y_node)) < 2 or len(y_node) < 5:
+            queue.append((node.left, node, True))
+            queue.append((node.right, node, False))
+            continue
+
+        model_info = pruned_node_models[node_id]
+        learners = model_info['learners']
+        J = model_info['J']
+        p_parent = logitboost.logitboost_predict_proba(X_node, learners, J)
+        auc_parent = roc_auc_score(y_node, p_parent if multiclass else p_parent[:, 1],
+                                   average=average if multiclass else 'macro')
+
+        left_mask = sample_masks.get(node.left.node_id, np.zeros(len(y), dtype=bool)) if node.left else None
+        right_mask = sample_masks.get(node.right.node_id, np.zeros(len(y), dtype=bool)) if node.right else None
+
+        if left_mask is None or right_mask is None:
+            continue
+
+        X_left, y_left = X[left_mask], y[left_mask]
+        X_right, y_right = X[right_mask], y[right_mask]
+
+        if len(np.unique(y_left)) < 2 or len(y_left) < 5 or len(np.unique(y_right)) < 2 or len(y_right) < 5:
+            continue
+
+        auc_left = roc_auc_score(
+            y_left,
+            logitboost.logitboost_predict_proba(X_left, pruned_node_models[node.left.node_id]['learners'], J)[:, 1]
+        )
+        auc_right = roc_auc_score(
+            y_right,
+            logitboost.logitboost_predict_proba(X_right, pruned_node_models[node.right.node_id]['learners'], J)[:, 1]
+        )
+
+        n_left, n_right = len(y_left), len(y_right)
+        weighted_auc_children = (n_left * auc_left + n_right * auc_right) / (n_left + n_right)
+        gain = weighted_auc_children - auc_parent
+
+        if verbose:
+            print(f"[Node {node_id}] AUC_parent={auc_parent:.4f}, Weighted_AUC_children={weighted_auc_children:.4f}, Gain={gain:.4f}")
+
+        if gain < delta:
+            if verbose:
+                print(f"→ Pruning node {node_id} (Gain={gain:.4f} < delta={delta})")
+            new_leaf = LeafNode(y_node, node_id=node_id)
+            if parent is None:
+                pruned_root = new_leaf
+            else:
+                if is_left:
+                    parent.left = new_leaf
+                else:
+                    parent.right = new_leaf
+
+            if node.left:
+                pruned_node_models.pop(node.left.node_id, None)
+            if node.right:
+                pruned_node_models.pop(node.right.node_id, None)
+        else:
+            queue.append((node.left, node, True))
+            queue.append((node.right, node, False))
+
+    return pruned_root, pruned_node_models
+
+
+def evaluate_tree_on_fold(X, y, root_node, node_models, metric='brier', true_probs=None):
+    sample_masks = get_sample_to_node_mask(root_node, X)
+    y_pred = np.zeros_like(y, dtype=float)
+
+    for node_id, mask in sample_masks.items():
+        if not np.any(mask):
+            continue
+        model_info = node_models.get(node_id)
+        if model_info is None:
+            continue
+        learners = model_info['learners']
+        J = model_info['J']
+        probs = logitboost.logitboost_predict_proba(X[mask], learners, J)
+        y_pred[mask] = probs[:, 1]
+
+    if true_probs is not None:
+        # Use real probabilities to compute "true" calibration metrics
+        if metric == 'brier':
+            return np.mean((y_pred - true_probs) ** 2)
+        elif metric == 'logloss':
+            eps = 1e-15
+            y_pred = np.clip(y_pred, eps, 1 - eps)
+            return -np.mean(true_probs * np.log(y_pred) + (1 - true_probs) * np.log(1 - y_pred))
+        elif metric == 'auc':
+            return roc_auc_score(true_probs, y_pred)
+        else:
+            raise ValueError(f"Unsupported metric '{metric}' with true_probs.")
+    else:
+        if metric == 'brier':
+            return brier_score_loss(y, y_pred)
+        elif metric == 'log-loss':
+            return log_loss(y, y_pred)
+        else:
+            raise ValueError("Unsupported metric")
+
+def cv_delta_pruning(X, y, root_node, node_models, deltas, K=5, metric_eval='brier',
+                     metric_prune='auc', method='local', multiclass=False, average='macro', verbose=False, true_probs=None):
+    kf = KFold(n_splits=K, shuffle=True, random_state=42)
+    delta_per_fold = []
+
+    for k, (train_idx, val_idx) in enumerate(kf.split(X)):
+        X_rest, y_rest = X[train_idx], y[train_idx]
+        X_fold, y_fold = X[val_idx], y[val_idx]
+        true_probs_fold = true_probs[val_idx] if true_probs is not None else None
+
+        best_score = np.inf
+        best_delta = None
+
+        for delta in deltas:
+            # if method == 'gain':
+            #     pruned_tree, pruned_models = regression_pruning_gain(
+            #         X_rest, y_rest, root_node, node_models, delta,
+            #         multiclass=multiclass, average=average, verbose=verbose
+            #     )
+            if method == 'original':
+                pruned_tree, pruned_models = regression_pruning_spline_bfs(
+                    X_rest, y_rest, root_node, node_models, delta,
+                    multiclass=multiclass, average=average, verbose=verbose
+                    )
+            elif method == 'local':
+                pruned_tree, pruned_models = regression_pruning_gain_local(
+                    X_rest, y_rest, root_node, node_models, delta,
+                    multiclass=multiclass, average=average, verbose=verbose
+                )
+                
+            score = evaluate_tree_on_fold(X_fold, y_fold, pruned_tree, pruned_models, metric=metric_eval, true_probs=true_probs_fold)
+
+            if verbose:
+                print(f"[Fold {k}] Delta={delta:.4f}, {metric_eval}={score:.4f}")
+
+            if score < best_score:
+                best_score = score
+                best_delta = delta
+
+        delta_per_fold.append(best_delta)
+
+    return np.mean(delta_per_fold)
+
+
+# Full pipeline function
 def pipeline_spline_tree_lmt(
     X_train, y_train, X_test, y_test,
     features=[0, 1],
