@@ -93,7 +93,7 @@ It is ideally to track one discrimination metric (e.g., AUC) plus one calibratio
 
 ---
 
-### 4  Visualisations
+### 4  Visualizations
 
 1. **Reliability diagram (binned curve)**
    *X-axis* = average predicted probability per bin.

@@ -194,11 +194,29 @@ def _accumulate_F(X, learners, J):
 
 
 def logitboost_predict_proba(X, learners, J):
+    """
+    Predict class probabilities for each sample in X using the trained LogitBoost model.
+
+    Parameters:
+    X : array-like, shape (n_samples, n_features)
+        The input samples for which to predict class probabilities.
+    learners : list
+        The trained LogitBoost learners (output of logitboost_fit).
+    J : int
+        The number of classes.
+
+    Returns:
+    proba : array, shape (n_samples, J)
+        The predicted class probabilities for each sample.
+    """
     return _softmax(_accumulate_F(X, learners, J))
 
 
 def logitboost_predict(X, learners, J):
     # Step 3: Output the classifier argmax_j F_j(x)
+    """
+    Predict the class labels for each sample in X using the trained LogitBoost model.
+    """
     return _accumulate_F(X, learners, J).argmax(axis=1)
 
 
@@ -207,15 +225,13 @@ def extract_linear_models(learners, J, n_features):
     Extract the final additive linear model coefficients (a_j, b_j) 
     for each class j from the LogitBoost learners.
 
-    Parameters
-    ----------
+    Parameters:
     learners : list of length M, where each element is a list of J tuples (idx, b0, b1)
                representing the weak learner for each class at that boosting round.
     J        : int, number of classes
     n_features : int, total number of features in the original X
 
-    Returns
-    -------
+    Returns:
     intercepts : array, shape (J,)
         The summed intercept for each class.
     coefs      : array, shape (J, n_features)
@@ -338,8 +354,17 @@ def simple_logistic_fit(
     1) 5-fold CV to pick the best M* (min error), using the fold’s own J_fold.
     2) Final fit on all data for M* rounds, optionally warm-start with matching J_node.
 
-    Returns
-    -------
+    Params:
+    X : array-like, shape (n_samples, n_features)
+        The input samples for which to predict class probabilities.
+    y : array-like, shape (n_samples,)
+        The true class labels.
+    learners : list
+        The trained LogitBoost learners (output of logitboost_fit).
+    J : int
+        The number of classes.
+
+    Returns:
     final_learners : list of M* boosting rounds
     J_node         : number of classes in y
     M_star         : selected iteration count
@@ -418,26 +443,31 @@ def simple_logistic_fit(
 def plot_decision_boundary(
         X, y, learners, J,
         title="Decision boundary",
-        fill_value="mean",       # cómo rellenar las dimensiones extra: "mean" | "median" | float
+        fill_value="mean",       # how to fill extra dimensions: "mean" | "median" | float
         h=0.01
     ):
     """
-    X : array (n_samples, D)         Datos completos.
-    y : array (n_samples,)           Etiquetas de 0 … J-1.
-    J : int                          Número de clases.
-    learners : objeto(s) del modelo  Pasan a logitboost_predict.
-    title : str                      Título de la figura.
-    fill_value : str | float         Cómo rellenar dims 3…D para la rejilla.
-    h : float                        Resolución de la rejilla.
+    Plot of the decision boundaries given by the logit boost model.
+    Params:
+    X : array (n_samples, D)         Complete data.
+    y : array (n_samples,)           Labels from 0 to J-1.
+    J : int                          Number of classes.
+    learners : model object(s)      Passed to logitboost_predict.
+    title : str                      Title of the figure.
+    fill_value : str | float         How to fill extra dimensions: "mean" | "median" | float
+    h : float                        Grid resolution.
+
+    Returns:
+    None
     """
 
-    # --- 1. Preparar rejilla en las primeras dos dimensiones -----------------
+    # Prepare grid for the first two dimensions
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                          np.arange(y_min, y_max, h))
 
-    # --- 2. Construir matriz completa para el predictor -----------------------
+    # Build full-dim grid
     n_grid = xx.size
     X_grid = np.zeros((n_grid, 2))
     X_grid[:, 0] = xx.ravel()
@@ -446,19 +476,19 @@ def plot_decision_boundary(
     if X.shape[1] > 2:
         X_grid = np.hstack((X_grid, (np.sum(X_grid**2, axis=1).reshape(-1, 1))))
 
-    # --- 3. Predicción --------------------------------------------------------
-    Z = logitboost_predict(X_grid, learners, J=J)   # (n_grid,) con etiquetas 0…J-1
+    # Prediction
+    Z = logitboost_predict(X_grid, learners, J=J)   # (n_grid,) cwith labels 0…J-1
     Z = Z.reshape(xx.shape)
 
-    # --- 4. Dibujar -----------------------------------------------------------
-    # 4.1 Puntos de entrenamiento
+    # Plot
+    # 4.1 Training points
     plt.figure(figsize=(8, 6))
     J = len(np.unique(y))
 
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired,
                 s=30, edgecolors='k')
 
-    # 4.2 Frontera de decisión
+    # 4.2 Decision boundary
     plt.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.Paired)
 
     plt.title(title)
@@ -481,8 +511,7 @@ def plot_probability_region_logit(
     """
     Plots the 2D probability region of a LogitBoost model over features i vs j.
 
-    Parameters
-    ----------
+    Parameters:
     X : array (n_samples, D)
     y : array (n_samples,)                      # only used for setting axis limits
     learners : list of boosting rounds
@@ -494,6 +523,9 @@ def plot_probability_region_logit(
     cmap : str or Colormap
     ax : matplotlib Axes, optional
     title : str
+
+    Returns:
+    None
     """
     i, j = feature_pair
     D = X.shape[1]

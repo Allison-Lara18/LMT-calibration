@@ -2,11 +2,12 @@ from itertools import product
 import numpy as np
 from . import logitboost_j_implementation as logitboost
 
+# Package for composite tree classifier implementation, where composite trees stand for classic trees whose
+# root nodes can be split into multiple regions based on feature thresholds.
+
 # ----------------------------------------- #
 # Main class for composite tree classifier  #
 # ----------------------------------------- #
-# Versión actualizada del CompositeTreeClassifier para múltiples thresholds por feature (intervalos explícitos)
-
 class CompositeTreeClassifier:
     def __init__(self, trees, region_conditions, feature_names=None):
         """
@@ -14,6 +15,7 @@ class CompositeTreeClassifier:
         - trees: list of fitted DecisionTreeClassifier, one per region
         - region_conditions: list of conditions per region
           Each region is a list of (feature_index, lower_bound, upper_bound)
+        - feature_names: list of feature names
         """
         self.trees = trees
         self.region_conditions = region_conditions
@@ -21,18 +23,23 @@ class CompositeTreeClassifier:
         
     def apply(self, X):
         """
-        Devuelve el ID del nodo hoja para cada muestra en X.
-        Usa el árbol base (self.tree) para aplicar el .apply() real.
+        Returns leaf node IDs for each sample in X.
         """
         return self.tree.apply(X)
 
     def _region_mask(self, X, region):
+        """
+        Returns a boolean mask for samples in X that belong to the specified region.
+        """
         mask = np.ones(len(X), dtype=bool)
         for f_idx, low, high in region:
             mask &= (X[:, f_idx] > low) & (X[:, f_idx] <= high)
         return mask
 
     def predict(self, X):
+        """
+        Predict class labels for samples in X.
+        """
         predictions = np.zeros(len(X), dtype=int)
         assigned = np.zeros(len(X), dtype=bool)
 
@@ -49,6 +56,9 @@ class CompositeTreeClassifier:
         return predictions
 
     def predict_proba(self, X):
+        """
+        Predict class probabilities for samples in X.
+        """
         n_classes = self.trees[0].n_classes_
         probs = np.zeros((len(X), n_classes))
         assigned = np.zeros(len(X), dtype=bool)
@@ -342,6 +352,15 @@ def create_root_with_multiple_thresholds(X, y, cut_dict, size='regular', criteri
 def visualize_root_and_subtrees_grid(trees, conditions, feature_indices, thresholds, feature_names=None):
     """
     Draw the root node with labels and below a grid with the child trees visualized with plot_tree.
+    Params:
+    - trees: list of trained DecisionTreeClassifier per region
+    - conditions: list of condition tuples for each region
+    - feature_indices: list of feature indices
+    - thresholds: list of thresholds for each feature
+    - feature_names: list of feature names (optional)
+
+    Returns:
+    - None
     """
     num_trees = len(trees)
     cols = min(2, num_trees)
@@ -393,15 +412,16 @@ import numpy as np
 def visualize_root_and_subtrees_grid_with_intervals(trees, region_conditions, feature_names=None, title="Composite Tree Root Node with Subtrees"):
     """
     Draw the root node with region intervals and a grid of subtrees.
-    
-    Parameters
-    ----------
-    trees : list
+    Params:
+    - trees: list
         Trained decision trees, one per region.
-    region_conditions : list
+    - region_conditions: list
         Each region is defined by a list of tuples: (feature_index, lower_bound, upper_bound).
-    feature_names : list or None
+    - feature_names: list or None
         Optional list of feature names to use for labels.
+
+    Returns:
+    - None
     """
     num_trees = len(trees)
     cols = min(2, num_trees)
@@ -460,6 +480,7 @@ def evaluate_forest(trees, X, y, cut_dict):
     - X: np.array, shape (n_samples, n_features)
     - y: np.array, labels
     - cut_dict: dict, mapping from feature indices to threshold values
+
     Returns:
     - acc: float, accuracy of the ensemble on the data
     - predictions: np.array, predicted labels for each sample in X
@@ -502,26 +523,23 @@ from sklearn.metrics import accuracy_score
 def evaluate_forest_with_intervals(trees, X, y, region_conditions):
     """
     Evaluate a composite forest using explicit region intervals.
-
-    Parameters
-    ----------
-    trees : list
+    Params:
+    - trees: list
         List of DecisionTreeClassifier objects (or None) per region.
-    X : np.array
+    - X: np.array
         Input data of shape (n_samples, n_features).
-    y : np.array
+    - y: np.array
         True labels of shape (n_samples,).
-    region_conditions : list
+    - region_conditions: list
         List of region-specific conditions:
         Each item is a list of (feature_index, lower_bound, upper_bound) tuples.
 
-    Returns
-    -------
-    acc : float
+    Returns:
+    - acc: float
         Accuracy on the assigned samples.
-    predictions : np.array
+    - predictions: np.array
         Predicted class labels for each sample.
-    assigned : np.array
+    - assigned: np.array
         Boolean mask indicating which samples received a prediction.
     """
     n_samples = len(X)
@@ -566,11 +584,31 @@ def fit_logistic_composite_tree_v2(
     - Use create_root_with_multiple_thresholds to create multiple subtrees by region.
     - Fit SimpleLogistic (LogitBoost with CV) at the root of each region to get M_star.
     - Fit LogitBoost with M_star rounds in all child nodes, warm-starting from parent.
-    
-    Returns
-    -------
-    trees          : list of fitted DecisionTreeClassifier, one per region.
-    node_models    : dict with key = (region_idx, node_id) and value = {
+    Params:
+    - X: np.array
+        Input features of shape (n_samples, n_features).
+    - y: np.array
+        Target labels of shape (n_samples,).
+    - cut_dict: dict
+        Dictionary specifying the cut points for each feature.
+    - size: str
+        Size of the tree ('regular' or 'small').
+    - pruning: bool
+        Whether to apply pruning to the trees.
+    - tree_random_state: int
+        Random state for tree fitting.
+    - lb_n_estimators: int
+        Number of estimators for LogitBoost.
+    - lb_eps: float
+        Epsilon for LogitBoost.
+    - lb_cv_splits: int
+        Number of cross-validation splits for LogitBoost.
+    - lb_random_state: int
+        Random state for LogitBoost.
+
+    Returns:
+    - trees: list of fitted DecisionTreeClassifier, one per region.
+    - node_models: dict with key = (region_idx, node_id) and value = {
                         'learners': list of boosting rounds,
                         'J': number of classes,
                         'M_star': int,
@@ -657,18 +695,15 @@ def fit_logistic_composite_tree_v2(
 def predict_composite_lmt(X, composite_clf, node_models):
     """
     Predict class labels for a Composite Logistic Model Tree.
-    
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-    composite_clf : CompositeTreeClassifier
+    Params:
+    - X: array-like of shape (n_samples, n_features)
+    - composite_clf: CompositeTreeClassifier
         Fitted composite tree.
-    node_models : dict
+    - node_models: dict
         Dictionary mapping (region_idx, node_id) to fitted LogitBoost models.
         
-    Returns
-    -------
-    preds : np.ndarray of shape (n_samples,)
+    Returns:
+    - preds: np.ndarray of shape (n_samples,)
         Predicted class labels.
     """
     preds = np.empty(len(X), dtype=int)
@@ -704,18 +739,15 @@ def predict_composite_lmt(X, composite_clf, node_models):
 def predict_proba_composite_lmt(X, composite_clf, node_models):
     """
     Predict class probabilities for a Composite Logistic Model Tree.
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-    composite_clf : CompositeTreeClassifier
+    Params:
+    - X: array-like of shape (n_samples, n_features)
+    - composite_clf: CompositeTreeClassifier
         Fitted composite tree.
-    node_models : dict
+    - node_models: dict
         Dictionary mapping (region_idx, node_id) to fitted LogitBoost models.
         
-    Returns
-    -------
-    proba_matrix : np.ndarray of shape (n_samples, max_J)
+    Returns:
+    - proba_matrix: np.ndarray of shape (n_samples, max_J)
         Predicted probabilities for each sample.
     """
     # Find max number of classes
@@ -762,6 +794,21 @@ def plot_tree_with_linear_models_grid_improved(
     model_threshold=1e-6,
     show_internal=False  # <--- NEW toggle
 ):
+    """
+    Plot Composite Tree with LogitBoost Models.
+    Params:
+    - trees: list of DecisionTreeRegressor
+    - region_conditions: list of list of tuples
+    - node_models_list: list of dict
+    - X: np.ndarray
+    - feature_names: list of str
+    - title: str
+    - model_threshold: float
+    - show_internal: bool
+
+    Returns:
+    - None
+    """
     num_trees = len(trees)
     cols = min(2, num_trees)
     rows = (num_trees + cols - 1) // cols
@@ -860,7 +907,13 @@ import numpy as np
 
 def split_node_models_by_tree(node_models, n_trees):
     """
-    Transforma un dict {(region_id, node_id): model, ...} a una lista de dicts por árbol.
+    Transforms a dict {(region_id, node_id): model, ...} into a list of dicts by tree.
+    Params:
+    - node_models: dict
+    - n_trees: int
+
+    Returns:
+    - models_list: list of dicts
     """
     models_list = [{} for _ in range(n_trees)]
     for (region_id, node_id), model in node_models.items():

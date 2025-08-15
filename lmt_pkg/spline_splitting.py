@@ -85,7 +85,31 @@ def grow_spline_tree(X, y, features, depth=0,
                      metric='auc',
                      verbose=False, node_id_counter=[0]):
     """
-    node_id_counter : list of 1 element acting as mutable counter (default [0])
+    Recursive function to grow a spline tree.
+    Params:
+    X : array-like, shape (n_samples, n_features)
+        The input features.
+    y : array-like, shape (n_samples,)
+        The target values.
+    features : list
+        List of feature indices to consider for splitting.
+    depth : int, (default=0)
+        The current depth of the tree.
+    max_depth : int, optional (default=3)
+        The maximum depth of the tree.
+    min_samples_leaf : int, optional (default=10)
+        The minimum number of samples required to be at a leaf node.
+    purity_threshold : float, optional (default=0.95)
+        The threshold for node purity.
+    metric : str, optional (default='auc')
+        The metric to optimize ('auc' or 'brier').
+    verbose : bool, optional (default=False)
+        Whether to print verbose output.
+    node_id_counter : list, optional (default=[0])
+        A mutable counter for assigning node IDs.
+
+    Returns:
+    LeafNode or DecisionNode
     """
     n = len(y)
 
@@ -197,6 +221,15 @@ def predict_single(x, node):
     """
     Predicts class for a single observation x (as a pandas Series)
     using the decision tree rooted at `node`.
+    Params:
+    - x : pandas Series
+        The input features for the observation to predict.
+    - node : DecisionNode
+        The root node of the decision tree.
+    
+    Returns:
+    - prediction : int
+        The predicted class for the observation.
     """
     while not node.is_leaf:
         if x[node.feature] <= node.tau:
@@ -209,6 +242,15 @@ def predict(X, root):
     """
     Predicts classes for a DataFrame X using the tree rooted at `root`.
     Returns a numpy array of predictions.
+    Params:
+    - X : DataFrame
+        The input features for the observations to predict.
+    - root : DecisionNode
+        The root node of the decision tree.
+
+    Returns:
+    - predictions : numpy array
+        The predicted classes for the observations.
     """
     return np.array([predict_single(row, root) for row in X])
 
@@ -217,6 +259,15 @@ def predict_proba_single(x, node):
     """
     Predicts class probabilities for a single observation x (as a pandas Series)
     using the decision tree rooted at `node`.
+    Params:
+    - x : pandas Series
+        The input features for the observation to predict.
+    - node : DecisionNode
+        The root node of the decision tree.
+
+    Returns:
+    - prediction : int
+        The predicted class probabilities for the observation.
     """
     while not node.is_leaf:
         if x[node.feature] <= node.tau:
@@ -233,6 +284,15 @@ def predict_proba(X, root):
     """
     Predicts class probabilities for a DataFrame X using the tree rooted at `root`.
     Returns a numpy array of probabilities.
+    Params:
+    - X : DataFrame
+        The input features for the observations to predict.
+    - root : DecisionNode
+        The root node of the decision tree.
+
+    Returns:
+    - probabilities : numpy array
+        The predicted class probabilities for the observations.
     """
     return np.array([predict_proba_single(row, root) for row in X])
 
@@ -246,6 +306,29 @@ import matplotlib.lines as mlines
 
 
 def plot_custom_tree(node, depth=0, pos_x=0.5, pos_y=1.0, dx=0.2, dy=0.15, ax=None, parent_pos=None):
+    """
+    Plots a custom decision tree based on spline.
+    Params:
+    - node : DecisionNode
+        The root node of the decision tree.
+    - depth : int
+        The current depth of the tree (used for positioning).
+    - pos_x : float
+        The x-coordinate for the current node's position.
+    - pos_y : float
+        The y-coordinate for the current node's position.
+    - dx : float
+        The horizontal distance between sibling nodes.
+    - dy : float
+        The vertical distance between levels.
+    - ax : matplotlib.axes.Axes, optional
+        The axes to plot on (if None, a new figure is created).
+    - parent_pos : tuple, optional
+        The position of the parent node (for drawing edges).
+
+    Returns:
+    - None
+    """
     if ax is None:
         fig, ax = plt.subplots(figsize=(20, 15))
         ax.set_axis_off()
@@ -301,9 +384,33 @@ def plot_decision_surface_from_custom_tree(
 ):
     """
     Plots 2D decision surface and optionally split lines for a custom spline-based decision tree.
+    Params:
+    - clf_tree : Trained custom tree
+    - X : DataFrame
+        The input features for the observations to predict.
+    - feature_pair : tuple
+        The pair of features to plot (e.g., (0, 1) for the first two features).
+    - y : Series, optional
+        The true labels for the observations (used for coloring points).
+    - fixed_vals : array-like, optional
+        Fixed values for the features not in `feature_pair`.
+    - grid_steps : int, optional
+        The number of steps in the grid for plotting.
+    - cmap : str, optional
+        The colormap to use for the plot.
+    - ax : matplotlib.axes.Axes, optional
+        The axes to plot on (if None, a new figure is created).
+    - title : str, optional
+        The title of the plot.
+    - plot_splits : bool, optional
+        Whether to plot the split lines of the tree.
+
+    Returns:
+    - ax : matplotlib.axes.Axes
+        The axes with the plot.
+    - contour : matplotlib.contour.QuadContourSet
+        The contour set for the decision surface.
     """
-    import numpy as np
-    import matplotlib.pyplot as plt
 
     i, j = feature_pair
 
@@ -352,6 +459,9 @@ def plot_decision_surface_from_custom_tree(
     # Plot split lines if requested
     if plot_splits:
         def add_splits(node):
+            """
+            Recursively adds split lines for the decision tree.
+            """
             if node.is_leaf:
                 return
             if node.feature == i:
@@ -380,10 +490,33 @@ def plot_probability_surface_tree(
     """
     Plots a 2D probability surface for a custom decision tree,
     showing P(y = prob_class) ∈ [0,1], with optional split lines.
-    """
-    import numpy as np
-    import matplotlib.pyplot as plt
+    Params:
+    - clf_tree : Trained custom tree based on linear splines.
+    - X : DataFrame
+        The input features for the observations to predict.
+    - feature_pair : tuple
+        The pair of features to plot (e.g., (0, 1) for the first two features).
+    - prob_class : int
+        The class label for which to plot the probability surface.
+    - fixed_vals : array-like, optional
+        Fixed values for the features not in `feature_pair`.
+    - grid_steps : int, optional
+        The number of steps in the grid for plotting.
+    - cmap : str, optional
+        The colormap to use for the plot.
+    - ax : matplotlib.axes.Axes, optional
+        The axes to plot on (if None, a new figure is created).
+    - title : str, optional
+        The title of the plot.
+    - plot_splits : bool, optional
+        Whether to plot the split lines of the tree.
 
+    Returns:
+    - ax : matplotlib.axes.Axes
+        The axes with the plot.
+    - contour : matplotlib.contour.QuadContourSet
+        The contour set for the decision surface.
+    """
     i, j = feature_pair
 
     # 1) Build grid
@@ -468,10 +601,9 @@ def fit_logistic_model_tree_custom(
     lb_random_state=0
 ):
     """
-    Entrena un árbol custom con LogitBoost en cada nodo (raíz con SimpleLogistic).
-
-    Parameters
-    ----------
+    Train a custom linear spline based tree with a LogitBoost model at each node.
+    In the root node, a SimpleLogistic model is trained (LogitBoost + 5-fold cross-validation).
+    Parameters:
     X : ndarray (n_samples, n_features)
     y : ndarray (n_samples,)
     features : list of feature indices
@@ -479,18 +611,17 @@ def fit_logistic_model_tree_custom(
     min_samples_leaf : int
     purity_threshold : float
     verbose : bool
-    lb_* : parámetros para LogitBoost
+    lb_* : params for LogitBoost
 
-    Returns
-    -------
-    root_node : raíz del árbol (TreeNode)
-    node_models : dict con node_id -> {learners, J, M_star, cv_errors}
+    Returns:
+    root_node : root of the tree (TreeNode)
+    node_models : dict with node_id -> {learners, J, M_star, cv_errors}
     """
 
     node_models = {}
-    node_counter = [0]  # contador mutable para asignar node_id
+    node_counter = [0]  # mutable counter to assign node_id
 
-    # Paso 1: construir el árbol base (con node_id)
+    # Step 1: build the base tree (with node_id)
     root_node = grow_spline_tree(
         X, y,
         features=features,
@@ -502,7 +633,7 @@ def fit_logistic_model_tree_custom(
         node_id_counter=node_counter
     )
 
-    # Paso 2: Entrenar modelo en la raíz con validación cruzada (SimpleLogistic)
+    # Step 2: Train root model with cross-validation (SimpleLogistic)
     learners_root, J_root, M_star, cv_errs = logitboost.simple_logistic_fit(
         X, y,
         n_estimators=lb_n_estimators,
@@ -512,7 +643,7 @@ def fit_logistic_model_tree_custom(
         random_state=lb_random_state
     )
 
-    # Guardar modelo de la raíz
+    # Save root model
     node_models[root_node.node_id] = {
         'learners': learners_root,
         'J': J_root,
@@ -520,12 +651,15 @@ def fit_logistic_model_tree_custom(
         'cv_errors': cv_errs
     }
 
-    # Paso 3: función recursiva para entrenar hijos
+    # Step 3: Recursive function to train children
     def recurse(node, X_sub, y_sub, warm_start):
+        """
+        Recursively train child nodes.
+        """
         if node.is_leaf:
             return
 
-        # Dividir datos según el split del nodo actual
+        # Split data according to the current node's split
         mask_left = X_sub[:, node.feature] <= node.tau
         mask_right = ~mask_left
 
@@ -533,7 +667,7 @@ def fit_logistic_model_tree_custom(
             X_child = X_sub[child_mask]
             y_child = y_sub[child_mask]
 
-            # Entrenar LogitBoost clásico con M_star y warm_start
+            # Train classic LogitBoost with M_star and warm_start
             learners, J = logitboost.logitboost_fit(
                 X_child, y_child,
                 n_estimators=M_star,
@@ -548,10 +682,10 @@ def fit_logistic_model_tree_custom(
                 'cv_errors': None
             }
 
-            # Recursión
+            # Recursion
             recurse(child_node, X_child, y_child, warm_start=(learners, J))
 
-    # Paso 4: comenzar desde la raíz
+    # Step 4: Start from the root
     recurse(root_node, X, y, warm_start=(learners_root, J_root))
 
     return root_node, node_models
@@ -561,8 +695,7 @@ def predict_lmt_custom(X, root_node, node_models):
     """
     Predict class labels for a custom Logistic Model Tree.
 
-    Parameters
-    ----------
+    Parameters:
     X : ndarray of shape (n_samples, n_features)
         Test samples.
     root_node : TreeNode
@@ -570,8 +703,7 @@ def predict_lmt_custom(X, root_node, node_models):
     node_models : dict
         Maps node_id -> { 'learners': [...], 'J': int, ... }.
 
-    Returns
-    -------
+    Returns:
     preds : ndarray of shape (n_samples,)
         Predicted class indices.
     """
@@ -599,15 +731,13 @@ def predict_proba_lmt_custom(X, root_node, node_models):
     """
     Predict probability distributions for a custom LMT.
 
-    Parameters
-    ----------
+    Parameters:
     X : ndarray of shape (n_samples, n_features)
     root_node : TreeNode
         Root of the custom decision tree.
     node_models : dict mapping node_id -> { 'learners': [...], 'J': int, ... }
 
-    Returns
-    -------
+    Returns:
     proba_matrix : ndarray of shape (n_samples, J_global)
         Predicted class probabilities for each sample.
     """
@@ -635,6 +765,9 @@ def predict_proba_lmt_custom(X, root_node, node_models):
 # Visualization Functions for custom LMT
 # --------------------------------------- #
 def compute_tree_depth(node):
+    """
+    Compute the depth of the tree.
+    """
     if node.is_leaf:
         return 1
     return 1 + max(compute_tree_depth(node.left), compute_tree_depth(node.right))
@@ -657,15 +790,32 @@ def plot_custom_tree_with_models(
     """
     Plots a custom decision tree (built from LeafNode / DecisionNode)
     and overlays the logitboost model formulas in each leaf (or optionally in all nodes).
+    Params:
+    - node: The current node to plot.
+    - node_models: The models associated with each node.
+    - X: The feature matrix used for training.
+    - title: The title of the plot.
+    - model_threshold: The threshold for displaying model terms.
+    - show_internal: Whether to show internal node models.
+    - depth: The current depth in the tree.
+    - pos_x: The x position for the current node.
+    - pos_y: The y position for the current node.
+    - dx: The x offset for child nodes.
+    - dy: The y offset for child nodes.
+    - ax: The matplotlib axis to plot on.
+    - parent_pos: The position of the parent node.
+
+    Returns:
+    None
     """
     if ax is None:
         depth_max = compute_tree_depth(node)
-        fig_height = 1.5 + depth_max * dy * 5  # altura proporcional
+        fig_height = 1.5 + depth_max * dy * 5  # proportional height
         fig, ax = plt.subplots(figsize=(20, fig_height))
         ax.set_axis_off()
         ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1.05)  # deja un pequeño margen para el título
-        ax.set_title(title, fontsize=14, y=1.02)  # empuja título hacia arriba
+        ax.set_ylim(0, 1.05)  # leave a small margin for the title
+        ax.set_title(title, fontsize=14, y=1.02)  # push title up
         plot_custom_tree_with_models(node, node_models, X, title, model_threshold, show_internal, depth, pos_x, pos_y, dx, dy, ax)
         plt.tight_layout()
         plt.show()
@@ -742,8 +892,7 @@ def plot_decision_regions_custom_tree(
     """
     Plots the 2D decision regions of a custom Logistic Model Tree using its predictions.
 
-    Parameters
-    ----------
+    Parameters:
     X : ndarray (n_samples, D)
         Full dataset.
     y : ndarray (n_samples,)
@@ -763,6 +912,12 @@ def plot_decision_regions_custom_tree(
     ax : matplotlib axis
         Optional axis for subplotting.
     title : str
+
+    Returns:
+    ax : matplotlib axis
+        The axis with the plotted decision regions.
+    cf : ContourSet
+        The contour set created by the contourf plot.
     """
     i, j = feature_pair
     D = X.shape[1]
@@ -845,8 +1000,7 @@ def plot_probability_surface_custom_tree(
     colouring each point by P(y = prob_class), and overlays the training points
     coloured by their own predicted probability.
 
-    Parameters
-    ----------
+    Parameters:
     root_node : root of the custom tree (from fit_logistic_model_tree_custom)
     node_models : dict mapping node_id to trained LogitBoost models
     X : array-like, shape (n_samples, n_features)
@@ -864,6 +1018,12 @@ def plot_probability_surface_custom_tree(
     title : str
     show_scatter : bool
         Whether to overlay the training points
+
+    Returns:
+    ax : matplotlib axis
+        The axis with the plotted probability surface.
+    contour : ContourSet
+        The contour set created by the contourf plot.
     """
     i, j = feature_pair
 
@@ -935,6 +1095,12 @@ def get_sample_to_node_mask(root_node, X):
     """
     Given a tree built with DecisionNode and LeafNode objects,
     return a dictionary that maps each node_id to a boolean mask over the samples in X.
+    Params:
+    - root_node: The root node of the tree.
+    - X: The feature matrix.
+
+    Returns:
+    - node_to_samples: A dictionary mapping node_id to boolean masks for samples in X.
     """
     n_samples = X.shape[0]
     node_to_samples = {}
@@ -982,8 +1148,7 @@ def regression_pruning_spline_bfs(
     """
     Prunes a spline-based LMT tree using AUC performance at each node.
 
-    Parameters
-    ----------
+    Parameters:
     X : ndarray of shape (n_samples, n_features)
     y : ndarray of shape (n_samples,)
     root_node : Node
@@ -997,8 +1162,7 @@ def regression_pruning_spline_bfs(
         Average type for multiclass AUC.
     verbose : bool
 
-    Returns
-    -------
+    Returns:
     pruned_root : Node
         Root of the pruned tree.
     pruned_node_models : dict
@@ -1078,99 +1242,6 @@ import numpy as np
 from sklearn.metrics import roc_auc_score, log_loss, brier_score_loss
 from sklearn.model_selection import KFold
 
-# def regression_pruning_gain(
-#     X, y, root_node, node_models, delta,
-#     multiclass=False, average='macro', verbose=False
-# ):
-#     """
-#     Prunes a tree using AUC gain criterion: prune node if AUC_subtree - AUC_leaf < delta.
-
-#     Parameters
-#     ----------
-#     X : ndarray of shape (n_samples, n_features)
-#     y : ndarray of shape (n_samples,)
-#     root_node : Node (custom tree)
-#     node_models : dict, node_id → model info
-#     delta : float, minimum AUC gain required to keep a node
-#     multiclass : bool
-#     average : str, average type for multiclass AUC
-#     verbose : bool
-
-#     Returns
-#     -------
-#     pruned_root : Node
-#     pruned_node_models : dict, pruned node models
-#     """
-#     # Deepcopy to avoid modifying original
-#     pruned_root = deepcopy(root_node)
-#     pruned_node_models = deepcopy(node_models)
-    
-#     sample_masks = get_sample_to_node_mask(pruned_root, X)
-
-#     queue = deque([(pruned_root, None, None)])
-
-#     while queue:
-#         node, parent, is_left = queue.popleft()
-#         if node is None or node.is_leaf:
-#             continue
-
-#         node_id = node.node_id
-#         mask = sample_masks.get(node_id, np.zeros(len(y), dtype=bool))
-#         X_node, y_node = X[mask], y[mask]
-
-#         # Skip if too few samples or only one class
-#         if len(np.unique(y_node)) < 2 or len(y_node) < 5:
-#             queue.append((node.left, node, True))
-#             queue.append((node.right, node, False))
-#             continue
-
-#         model_info = pruned_node_models[node_id]
-#         learners = model_info['learners']
-#         J = model_info['J']
-#         p_subtree = logitboost.logitboost_predict_proba(X_node, learners, J)
-#         auc_subtree = roc_auc_score(y_node, p_subtree if multiclass else p_subtree[:, 1],
-#                                     average=average if multiclass else 'macro')
-
-#         # Compute collapsed model (leaf)
-#         collapsed_leaf = LeafNode(y_node, node_id=node_id)
-#         p_leaf = np.tile(np.mean(y_node), (len(y_node), 2)) if not multiclass else p_subtree
-#         auc_leaf = roc_auc_score(y_node, p_leaf if multiclass else p_leaf[:, 1],
-#                                  average=average if multiclass else 'macro')
-
-#         gain = auc_subtree - auc_leaf
-
-#         if verbose:
-#             print(f"[Node {node_id}] AUC_subtree={auc_subtree:.4f}, AUC_leaf={auc_leaf:.4f}, Gain={gain:.4f}")
-
-#         if gain < delta:
-#             # Replace with leaf node
-#             if verbose:
-#                 print(f"→ Pruning node {node_id} (Gain={gain:.4f} < delta={delta})")
-#             new_leaf = collapsed_leaf
-#             if parent is None:
-#                 pruned_root = new_leaf
-#             else:
-#                 if is_left:
-#                     parent.left = new_leaf
-#                 else:
-#                     parent.right = new_leaf
-
-#             if node.left:
-#                 pruned_node_models.pop(node.left.node_id, None)
-#             if node.right:
-#                 pruned_node_models.pop(node.right.node_id, None)
-#         else:
-#             queue.append((node.left, node, True))
-#             queue.append((node.right, node, False))
-
-#     return pruned_root, pruned_node_models
-
-# Re-import necessary modules after reset
-from copy import deepcopy
-from collections import deque
-import numpy as np
-from sklearn.metrics import roc_auc_score
-
 def regression_pruning_gain_local(
     X, y, root_node, node_models, delta,
     multiclass=False, average='macro', verbose=False
@@ -1179,8 +1250,7 @@ def regression_pruning_gain_local(
     Prunes a tree using local AUC gain from splitting: compares parent vs. weighted AUC of children.
     If the weighted AUC of the children does not improve over the parent by at least delta, prune.
 
-    Parameters
-    ----------
+    Parameters:
     X : ndarray of shape (n_samples, n_features)
     y : ndarray of shape (n_samples,)
     root_node : Node (custom tree)
@@ -1190,8 +1260,7 @@ def regression_pruning_gain_local(
     average : str
     verbose : bool
 
-    Returns
-    -------
+    Returns:
     pruned_root : Node
     pruned_node_models : dict, pruned node models
     """
@@ -1273,6 +1342,19 @@ def regression_pruning_gain_local(
 
 
 def evaluate_tree_on_fold(X, y, root_node, node_models, metric='brier', true_probs=None):
+    """
+    Evaluate the performance of the tree on a given fold.
+    Params:
+    - X: Feature matrix
+    - y: True labels
+    - root_node: Root node of the tree
+    - node_models: Dictionary of models for each node
+    - metric: Evaluation metric
+    - true_probs: True probabilities for calibration (optional)
+
+    Returns:
+    - float: The evaluation score based on the specified metric.
+    """
     sample_masks = get_sample_to_node_mask(root_node, X)
     y_pred = np.zeros_like(y, dtype=float)
 
@@ -1309,6 +1391,26 @@ def evaluate_tree_on_fold(X, y, root_node, node_models, metric='brier', true_pro
 
 def cv_delta_pruning(X, y, root_node, node_models, deltas, K=5, metric_eval='brier',
                      metric_prune='auc', method='local', multiclass=False, average='macro', verbose=False, true_probs=None):
+    """
+    Cross-validate the pruning process to find the best delta.
+    Params:
+    - X: Feature matrix
+    - y: True labels
+    - root_node: Root node of the tree
+    - node_models: Dictionary of models for each node
+    - deltas: List of delta values to test
+    - K: Number of cross-validation folds
+    - metric_eval: Evaluation metric for validation
+    - metric_prune: Evaluation metric for pruning
+    - method: Pruning method to use
+    - multiclass: Whether the problem is multiclass
+    - average: Averaging method for multiclass metrics
+    - verbose: Whether to print progress
+    - true_probs: True probabilities for calibration (optional)
+
+    Returns:
+    - float: The mean delta value across all folds.
+    """
     kf = KFold(n_splits=K, shuffle=True, random_state=42)
     delta_per_fold = []
 
@@ -1321,11 +1423,6 @@ def cv_delta_pruning(X, y, root_node, node_models, deltas, K=5, metric_eval='bri
         best_delta = None
 
         for delta in deltas:
-            # if method == 'gain':
-            #     pruned_tree, pruned_models = regression_pruning_gain(
-            #         X_rest, y_rest, root_node, node_models, delta,
-            #         multiclass=multiclass, average=average, verbose=verbose
-            #     )
             if method == 'original':
                 pruned_tree, pruned_models = regression_pruning_spline_bfs(
                     X_rest, y_rest, root_node, node_models, delta,
@@ -1353,7 +1450,9 @@ def cv_delta_pruning(X, y, root_node, node_models, deltas, K=5, metric_eval='bri
 
 # Full pipeline function
 def pipeline_spline_tree_lmt(
-    X_train, y_train, X_test, y_test,
+    X_train, y_train, 
+    X_val, y_val,
+    X_test, y_test,
     features=[0, 1],
     max_depth=6,
     min_samples_leaf=10,
@@ -1362,25 +1461,36 @@ def pipeline_spline_tree_lmt(
     lb_eps=1e-5,
     lb_cv_splits=5,
     lb_random_state=0,
-    pruning_threshold=0.8,
-    multiclass=False,
-    average='macro',
-    verbose=False
+    verbose=False,
+    metric_prune='auc', # metric for pruning
+    method = 'local', # or 'original'
+    metric_eval='log-loss', # metric for evaluation (or 'brier')
+    K=5,
+    true_probs=None,
+    deltas=None
 ):
     """
-    Full pipeline to fit a custom Logistic Model Tree with LogitBoost and prune it.
-    
-    Parameters
-    ----------
-    X_train, y_train : training data
-    X_test, y_test : test data
-    features : list of feature indices to use
-    max_depth, min_samples_leaf, purity_threshold : tree parameters
-    lb_* : LogitBoost parameters
-    pruning_threshold : AUC threshold for pruning
-    multiclass : whether the problem is multiclass
-    average : averaging method for AUC
-    verbose : whether to print progress
+    Full pipeline to fit a custom Logistic Model Tree with LogitBoost, prune it and get predictions.
+    Params:
+    - X_train, y_train : training data
+    - X_test, y_test : test data
+    - X_val, y_val : validation data
+    - features : list of feature indices to use
+    - max_depth, min_samples_leaf, purity_threshold : tree parameters
+    - lb_* : LogitBoost parameters
+    - verbose : whether to print progress
+    - metric_prune : metric for pruning process, default AUC
+    - method : pruning method to use, default 'local', another option is 'original'
+    - metric_eval : metric for evaluation, default log-loss, another option is 'brier'
+    - K : number of cross-validation folds, default 5
+    - true_probs : true probabilities for calibration (optional)
+    - deltas : list of delta values to test (optional)
+
+    Returns:
+    - pruned_tree : the pruned tree
+    - pruned_node_models : the pruned node models
+    - y_pred : predictions on the test set
+    - y_pred_probs : predicted probabilities on the test set
     """
     # Step 1: Fit the custom Logistic Model Tree
     tree, node_models = fit_logistic_model_tree_custom(
@@ -1396,17 +1506,38 @@ def pipeline_spline_tree_lmt(
         lb_random_state=lb_random_state
     )
 
-    # Step 2: Prune the tree based on AUC performance
-    pruned_tree, pruned_node_models = regression_pruning_spline_bfs(
-        X_train, y_train, tree, node_models,
-        threshold=pruning_threshold,
-        multiclass=multiclass,
-        average=average,
-        verbose=verbose
+    # Step 2: find the best delta for pruning with the cv routine
+    if deltas is None:
+        if method == 'local':
+            deltas = np.linspace(0, 0.0030, 30)
+        elif method == 'original':
+            deltas = np.linspace(0.60, 0.90, 30)
+
+    delta_star = cv_delta_pruning(
+        X_val, y_val, tree, node_models,
+        deltas=deltas, K=K,
+        metric_eval=metric_eval,
+        metric_prune=metric_prune,  # the metric used during pruning
+        method=method,  # or 'original'
+        verbose=verbose,
+        true_probs=true_probs
     )
 
-    # Step 3: Predict and evaluate on test set
-    y_pred = predict_lmt_custom(X_test, pruned_tree, pruned_node_models)
-    accuracy = np.mean(y_pred == y_test)
+    # Step 3: Prune the tree using the best delta
+    if method == 'local':
+        pruned_tree, pruned_node_models = regression_pruning_gain_local(
+            X_train, y_train, tree, node_models,
+            delta=delta_star, verbose=True
+        )
+    elif method == 'original':
+        pruned_tree, pruned_node_models = regression_pruning_spline_bfs(
+            X_train, y_train, tree, node_models,
+            threshold=delta_star, verbose=True
+        )
 
-    return pruned_tree, pruned_node_models, accuracy
+
+    # Step 4: Predict on test set
+    y_pred = predict_lmt_custom(X_test, pruned_tree, pruned_node_models)
+    y_pred_probs = predict_proba_lmt_custom(X_test, pruned_tree, pruned_node_models)
+
+    return pruned_tree, pruned_node_models, y_pred, y_pred_probs

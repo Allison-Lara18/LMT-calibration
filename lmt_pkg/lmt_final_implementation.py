@@ -125,6 +125,12 @@ def construct_tree(X, y, size='regular', pruning=False, pruning_show_stats=False
 def _choose_cv_folds(y, k_desired=5):
     """
     Pick a stratified‐CV fold count ≤ smallest class size (or None if too small).
+    Params:
+    - y: array-like of shape (n_samples,)
+    - k_desired: int, desired number of CV folds
+
+    Returns:
+    - k: int, number of CV folds to use
     """
     y = np.asarray(y).ravel()
     # minimum count among classes
@@ -147,11 +153,20 @@ def fit_logistic_model_tree(
     Build a DecisionTree, then at each node fit a SimpleLogistic (LogitBoost) model
     using the samples that reach that node. Root has no warm_start, children
     inherit their parent's model as warm_start.
+    Params:
+    - X: np.ndarray of shape (n_samples, n_features)
+    - y: np.ndarray of shape (n_samples,)
+    - size: str, size of the tree
+    - pruning: bool, whether to apply pruning
+    - tree_random_state: int, random state for the tree
+    - lb_n_estimators: int, number of estimators for LogitBoost
+    - lb_eps: float, epsilon for LogitBoost
+    - lb_cv_splits: int, number of CV splits for LogitBoost
+    - lb_random_state: int, random state for LogitBoost
 
-    Returns
-    -------
-    clf_tree     : fitted DecisionTreeClassifier
-    node_models  : dict mapping node_id -> {
+    Returns:
+    - clf_tree     : fitted DecisionTreeClassifier
+    - node_models  : dict mapping node_id -> {
                       'learners': [...],
                       'J': int,
                       'M_star': int,
@@ -241,11 +256,20 @@ def fit_logistic_model_tree_v2(
     V2: SimpleLogistic only at root (no warm-start), then
     classical LogitBoost at every other node for M* rounds,
     passing warm_start=parent_model so children inherit.
+    Params:
+    - X: np.ndarray of shape (n_samples, n_features)
+    - y: np.ndarray of shape (n_samples,)
+    - size: str, size of the tree
+    - pruning: bool, whether to apply pruning
+    - tree_random_state: int, random state for the tree
+    - lb_n_estimators: int, number of estimators for LogitBoost
+    - lb_eps: float, epsilon for LogitBoost
+    - lb_cv_splits: int, number of CV splits for LogitBoost
+    - lb_random_state: int, random state for LogitBoost
 
-    Returns
-    -------
-    clf_tree     : fitted DecisionTreeClassifier
-    node_models  : dict[node_id] = {
+    Returns:
+    - clf_tree     : fitted DecisionTreeClassifier
+    - node_models  : dict[node_id] = {
                       'learners': list,
                       'J': int,
                       'M_star': int,
@@ -279,6 +303,15 @@ def fit_logistic_model_tree_v2(
     node_models = {}
 
     def recurse(node_id, warm_start):
+        """
+        Recursively fit models to each node.
+        Params:
+        - node_id: int, ID of the current node
+        - warm_start: tuple, (learners, J) from the parent node
+
+        Returns:
+        - None
+        """
         # mask of samples reaching this node
         mask = node_indicator[:, node_id].toarray().ravel().astype(bool) \
                if sparse.issparse(node_indicator) \
@@ -339,19 +372,18 @@ def regression_pruning(
     average='macro'
 ):
     """
-    Experimental pruning method based on AUC of each submodel at each node.
-
+    Experimental pruning method based on AUC of each submodel at each node. If the AUC is above a certain threshold, the node is pruned.
     Params:
-    X_train : array-like (n_samples, n_features)
-    y_train : array-like (n_samples,)
-    clf : DecisionTreeClassifier
-    nodes_models : dict
-    threshold : float, minimum AUC to keep a node
-    multiclass : bool, optional (default=False)
+    - X_train : array-like (n_samples, n_features)
+    - y_train : array-like (n_samples,)
+    - clf : DecisionTreeClassifier
+    - nodes_models : dict
+    - threshold : float, minimum AUC to keep a node
+    - multiclass : bool, optional (default=False)
     
     Returns:
-    pruned_clf : DecisionTreeClassifier with pruned nodes
-    pruned_nodes : dict, containing models for remaining nodes
+    - pruned_clf : DecisionTreeClassifier with pruned nodes
+    - pruned_nodes : dict, containing models for remaining nodes
     """
     # 1) Clone the tree and node models
     pruned_clf = deepcopy(clf)
@@ -455,6 +487,20 @@ def regression_pruning(
 # Prediction                          #
 # ----------------------------------- #
 def predict_lmt(X, clf_tree, node_models):
+    """
+    Predict class labels for a Logistic Model Tree.
+    Params:
+    - X : array-like of shape (n_samples, n_features)
+        Input features.
+    - clf_tree : DecisionTreeClassifier
+        The top-level tree you built with construct_tree().
+    - node_models : dict
+        Maps leaf_id -> { 'learners': [...], 'J': int, ... }.
+
+    Returns:
+    - preds : ndarray of shape (n_samples,)
+        Predicted class labels.
+    """
     leaf_ids = clf_tree.apply(X)
     preds = []
     for xi, leaf in zip(X, leaf_ids):
@@ -481,6 +527,21 @@ def predict_lmt(X, clf_tree, node_models):
 #         probs.append(p01[0, 1])
 #     return np.array(probs)
 def predict_proba_lmt(X, clf_tree, node_models):
+    """
+    Return P(y=1) for each row of X by routing it to its leaf, then
+    calling logitboost_predict_proba on that leaf's model.
+    Params:
+    - X : array-like of shape (n_samples, n_features)
+        Input features.
+    - clf_tree : DecisionTreeClassifier
+        The top-level tree you built with construct_tree().
+    - node_models : dict
+        Maps leaf_id -> { 'learners': [...], 'J': int, ... }.
+
+    Returns:
+    - probs : ndarray of shape (n_samples,)
+        Predicted probabilities for the positive class.
+    """
     leaf_ids = clf_tree.apply(X)
     probs = []
 
@@ -508,18 +569,16 @@ def predict_lmt_multiclass(X, clf_tree, node_models):
     """
     Predict class labels for a multiclass Logistic Model Tree.
 
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
+    Parameters:
+    - X : array-like of shape (n_samples, n_features)
         Test set.
-    clf_tree : DecisionTreeClassifier
+    - clf_tree : DecisionTreeClassifier
         The top‐level tree you built with construct_tree().
-    node_models : dict
+    - node_models : dict
         Maps leaf_id -> { 'learners': [...], 'J': int, ... }.
 
-    Returns
-    -------
-    preds : ndarray of shape (n_samples,)
+    Returns:
+    - preds : ndarray of shape (n_samples,)
         Predicted class indices (0..J-1).
     """
     leaf_ids = clf_tree.apply(X)
@@ -538,16 +597,13 @@ def predict_lmt_multiclass(X, clf_tree, node_models):
 def predict_proba_lmt_multiclass(X, clf_tree, node_models):
     """
     Predict full probability distributions for a multiclass LMT.
+    Parameters:
+    - X : array-like of shape (n_samples, n_features)
+    - clf_tree : DecisionTreeClassifier
+    - node_models : dict mapping leaf_id -> { 'learners': [...], 'J': int, ... }
 
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-    clf_tree : DecisionTreeClassifier
-    node_models : dict mapping leaf_id -> { 'learners': [...], 'J': int, ... }
-
-    Returns
-    -------
-    proba_matrix : ndarray of shape (n_samples, J_global)
+    Returns:
+    - proba_matrix : ndarray of shape (n_samples, J_global)
         proba_matrix[i, j] = P(y=j | X[i]) as estimated by the leaf's LogitBoost.
         If different leaves have different J, the matrix is zero-padded on the right.
     """
@@ -583,6 +639,25 @@ def plot_tree_with_linear_models(
     """
     Plots a DecisionTree with appended linear models in each node.
     Can be embedded inside a subplot grid using the 'ax' argument.
+    Params:
+    - clf_tree : DecisionTreeClassifier
+        The top-level tree you built with construct_tree().
+    - node_models : dict
+        Maps leaf_id -> { 'learners': [...], 'J': int, ... }.
+    - X : array-like of shape (n_samples, n_features)
+    - title : str
+        Title for the plot.
+    - class_names : list of str
+        Class names for the plot legend.
+    - show_internal : bool
+        Whether to show internal node models.
+    - model_threshold : float
+        Coefficient threshold for displaying model terms.
+    - ax : matplotlib.axes.Axes, optional
+        Axis to plot on (useful for subplots).
+
+    Returns:
+    - None
     """
     import re
     n_features = X.shape[1]
@@ -612,6 +687,9 @@ def plot_tree_with_linear_models(
         ax=ax,
         fontsize=8
     )
+    """
+    Auxiliar function for plotting the plain tree.
+    """
 
     # identify leaf node IDs
     tree_ = clf_tree.tree_
@@ -667,6 +745,36 @@ def plot_tree_decision_surface(
     cmap=plt.cm.RdYlBu,
     ax=None
 ):
+    """
+    Plots the decision surface of a decision tree for a given pair of features.
+    Params:
+    - X : array-like of shape (n_samples, n_features)
+        Test set.
+    - y : array-like of shape (n_samples,)
+        True labels for the test set.
+    - feature_pair : tuple of two ints
+        Indices of the two features to plot.
+    - size : str
+        Size of the tree ('small', 'regular', 'large').
+    - pruning : bool
+        Whether to apply pruning to the tree.
+    - feature_names : list of str
+        Names of the features.
+    - class_names : list of str
+        Names of the classes.
+    - plot_colors : str
+        Colors to use for the plot.
+    - plot_step : float
+        Step size for the plot grid.
+    - cmap : str
+        Colormap to use for the plot.
+    - ax : matplotlib.axes.Axes, optional
+        Axis to plot on (useful for subplots).
+
+    Returns:
+    - ax : matplotlib.axes.Axes
+        The axes on which the plot was drawn.
+    """
     i, j = feature_pair
     X2 = X[:, [i, j]]
 
@@ -725,26 +833,24 @@ def plot_decision_surface_from_fitted_tree(
     Plots the 2D decision surface of a fitted DecisionTreeClassifier
     and (if y is provided) overlays the true points in matching colors.
 
-    Parameters
-    ----------
-    clf_tree : DecisionTreeClassifier
+    Parameters:
+    - clf_tree : DecisionTreeClassifier
         A tree already fit on the full-dimensional X.
-    X : array-like, shape (n_samples, n_features)
-    feature_pair : tuple of two ints
+    - X : array-like, shape (n_samples, n_features)
+    - feature_pair : tuple of two ints
         Indices of the two features to plot.
-    y : array-like of shape (n_samples,), optional
+    - y : array-like of shape (n_samples,), optional
         True class labels for overlaying points.
-    fixed_vals : array-like of shape (n_features,), optional
+    - fixed_vals : array-like of shape (n_features,), optional
         Values to fill for “unused” features. Defaults to X.mean(axis=0).
-    grid_steps : int
+    - grid_steps : int
         Number of points along each axis for the background grid.
-    cmap : str or Colormap
-    ax : matplotlib Axes, optional
+    - cmap : str or Colormap
+    - ax : matplotlib Axes, optional
 
-    Returns
-    -------
-    ax : matplotlib Axes
-    contour : QuadContourSet
+    Returns:
+    - ax : matplotlib Axes
+    - contour : QuadContourSet
     """
     i, j = feature_pair
 
@@ -812,26 +918,29 @@ def plot_decision_regions_lmt(
     """
     Plots the 2D decision regions of an LMT model using its class predictions.
 
-    Parameters
-    ----------
-    X : array, shape (n_samples, D)
+    Params:
+    - X : array, shape (n_samples, D)
         Full dataset.
-    y : array, shape (n_samples,)
+    - y : array, shape (n_samples,)
         True labels (0 … J-1), used for overlay and J=number of classes.
-    clf_lmt : object
+    - clf_lmt : object
         The fitted tree from fit_logistic_model_tree.
-    nodes_lmt : object
+    - nodes_lmt : object
         The nodes/models returned alongside clf_lmt.
-    feature_pair : tuple(int i, int j)
+    - feature_pair : tuple(int i, int j)
         Which two features to plot on the x- and y-axes.
-    fill_value : "mean" | "median" | float
+    - fill_value : "mean" | "median" | float
         How to fill the other dimensions (3…D) when building the grid.
-    grid_steps : int
+    - grid_steps : int
         Resolution of the background grid.
-    cmap : Colormap
+    - cmap : Colormap
         A discrete colormap, e.g. plt.cm.Paired.
-    ax : matplotlib Axes, optional
-    title : str
+    - ax : matplotlib Axes, optional
+    - title : str
+
+    Returns:
+    - ax : matplotlib Axes
+    - cf : QuadContourSet   
     """
     i, j = feature_pair
     D = X.shape[1]
@@ -935,27 +1044,25 @@ def plot_probability_surface_tree(
     each location by P(y = prob_class) ∈ [0,1], and overlays the
     training points coloured by their own predicted probabilities.
 
-    Parameters
-    ----------
-    clf : classifier with predict_proba
+    Params:
+    - clf : classifier with predict_proba
         Already fit on the full-dimensional X.
-    X : array-like, shape (n_samples, n_features)
-    feature_pair : tuple of two ints
+    - X : array-like, shape (n_samples, n_features)
+    - feature_pair : tuple of two ints
         Indices of the two features to plot.
-    prob_class : int, default=1
+    - prob_class : int, default=1
         Which column of predict_proba to show (e.g. 1 for P(y=1)).
-    fixed_vals : array-like of shape (n_features,), optional
+    - fixed_vals : array-like of shape (n_features,), optional
         Values to fill for unused features. Defaults to X.mean(axis=0).
-    grid_steps : int, default=200
+    - grid_steps : int, default=200
         Resolution of the background grid.
-    cmap : str or Colormap, default='RdYlBu'
-    ax : matplotlib Axes, optional
-    title : str
+    - cmap : str or Colormap, default='RdYlBu'
+    - ax : matplotlib Axes, optional
+    - title : str
 
-    Returns
-    -------
-    ax : matplotlib Axes
-    contour : QuadContourSet
+    Returns:
+    - ax : matplotlib Axes
+    - contour : QuadContourSet
     """
     i, j = feature_pair
 
@@ -1029,26 +1136,24 @@ def plot_probability_surface_lmt(
     point by P(y = prob_class) ∈ [0,1], and overlays the training points
     coloured by their own predicted probability.
 
-    Parameters
-    ----------
-    clf_lmt : the object returned by fit_logistic_model_tree (e.g. clf_shallow_ext)
-    nodes_lmt : the nodes structure returned alongside clf_lmt
-    X : array-like, shape (n_samples, n_features)
-    feature_pair : tuple of two ints (i, j), indices of features to plot
-    prob_class : int, default=1
-        Which class’s probability to display (0 or 1)
-    fixed_vals : array-like of shape (n_features,), optional
+    Params:
+    - clf_lmt : the object returned by fit_logistic_model_tree (e.g. clf_shallow_ext)
+    - nodes_lmt : the nodes structure returned alongside clf_lmt
+    - X : array-like, shape (n_samples, n_features)
+    - feature_pair : tuple of two ints (i, j), indices of features to plot
+    - prob_class : int, default=1
+        Which class's probability to display (0 or 1)
+    - fixed_vals : array-like of shape (n_features,), optional
         Values to hold the “unused” features at. Defaults to X.mean(axis=0).
-    grid_steps : int, default=200
+    - grid_steps : int, default=200
         Resolution of the background grid.
-    cmap : str or Colormap, default='RdYlBu'
-    ax : matplotlib Axes, optional
-    title : str
+    - cmap : str or Colormap, default='RdYlBu'
+    - ax : matplotlib Axes, optional
+    - title : str
 
-    Returns
-    -------
-    ax : matplotlib Axes
-    contour : QuadContourSet
+    Returns:
+    - ax : matplotlib Axes
+    - contour : QuadContourSet
     """
     i, j = feature_pair
 
@@ -1128,14 +1233,12 @@ def preprocess_dataset(X: pd.DataFrame) -> pd.DataFrame:
     - Nominal (categorical) columns: impute missing values with the mode,
       then one-hot encode.
     
-    Parameters
-    ----------
-    X : pd.DataFrame
+    Params:
+    - X : pd.DataFrame
         Input dataset with numeric and nominal columns.
     
-    Returns
-    -------
-    X_processed : pd.DataFrame
+    Returns:
+    - X_processed : pd.DataFrame
         Preprocessed DataFrame with no missing values and nominal
         columns replaced by one-hot encoded features.
     """
@@ -1183,15 +1286,23 @@ def compare_tree_variants(X_train, X_test, y_train, y_test, lmt, decision=False,
     """
     Trains and evaluates four logistic model trees using different sizes and pruning strategies.
     Plots the tree structure and prints evaluation metrics.
-    
-    Parameters
-    ----------
-    X_train, X_test : pd.DataFrame or np.ndarray
+
+    Params:
+    - X_train, X_test : pd.DataFrame or np.ndarray
         Training and test feature sets.
-    y_train, y_test : pd.Series or np.ndarray
+    - y_train, y_test : pd.Series or np.ndarray
         Training and test labels.
-    lmt : module or object
+    - lmt : module or object
         Module or object that provides the `construct_tree` method.
+    - decision : bool, default=False
+        Whether to plot decision surfaces.
+    - prob_surf : bool, default=False
+        Whether to plot probability surfaces.
+    - feature_pair : tuple of int, default=(0, 1)
+        The pair of features to use for 2D plots.
+
+    Returns:
+    - None
     """
     
     configs = [
@@ -1275,6 +1386,19 @@ def compare_tree_variants_multiclass(
     """
     Trains and evaluates four logistic model trees (3-class) with different sizes and pruning.
     Plots the tree structure and prints multiclass evaluation metrics.
+    Params:
+    - X_train, X_test : pd.DataFrame or np.ndarray
+    - y_train, y_test : pd.Series or np.ndarray
+    - lmt : module or object
+    - decision : bool, default=False
+        Whether to plot decision surfaces.
+    - prob_surf : bool, default=False
+        Whether to plot probability surfaces.
+    - feature_pair : tuple of int, default=(0, 1)
+        The pair of features to use for 2D plots.
+
+    Returns:
+    - None
     """
     configs = [
         ('shallow', False, "Shallow Tree (No Pruning)"),
@@ -1351,14 +1475,22 @@ def compare_lmt_variants(X_train, X_test, y_train, y_test, lmt, decision=False, 
     Trains and evaluates four logistic model trees using different sizes and pruning strategies.
     Plots the tree structure and prints evaluation metrics.
     
-    Parameters
-    ----------
-    X_train, X_test : pd.DataFrame or np.ndarray
+    Params:
+    - X_train, X_test : pd.DataFrame or np.ndarray
         Training and test feature sets.
-    y_train, y_test : pd.Series or np.ndarray
+    - y_train, y_test : pd.Series or np.ndarray
         Training and test labels.
-    lmt : module or object
+    - lmt : module or object
         Module or object that provides the `construct_tree` method.
+    - decision : bool, default=False
+        Whether to plot decision surfaces.
+    - prob_surf : bool, default=False
+        Whether to plot probability surfaces.
+    - feature_pair : tuple of int, default=(0, 1)
+        The pair of features to use for 2D plots.
+
+    Returns:
+    - None
     """
     
     configs = [
@@ -1437,14 +1569,20 @@ def compare_lmt_variants_v2(X_train, X_test, y_train, y_test, lmt, decision=True
     Trains and evaluates four logistic model trees using different sizes and pruning strategies.
     Plots the tree structure and prints evaluation metrics.
     
-    Parameters
-    ----------
-    X_train, X_test : pd.DataFrame or np.ndarray
+    Params:
+    - X_train, X_test : pd.DataFrame or np.ndarray
         Training and test feature sets.
-    y_train, y_test : pd.Series or np.ndarray
+    - y_train, y_test : pd.Series or np.ndarray
         Training and test labels.
-    lmt : module or object
+    - lmt : module or object
         Module or object that provides the `construct_tree` method.
+    - decision : bool, default=True
+        Whether to plot decision surfaces.
+    - feature_pair : tuple of int, default=(0, 1)
+        The pair of features to use for 2D plots.
+
+    Returns:
+    - None
     """
     
     configs = [
@@ -1645,9 +1783,22 @@ def compare_lmt_variants_multiclass(
     """
     Evaluate and visualize 4 LMT variants for multiclass classification.
 
-    Parameters
-    ----------
-    original_models : list of (clf_tree, node_models) or None
+    Parameters:
+    - X_train, X_test : pd.DataFrame or np.ndarray
+    - y_train, y_test : pd.Series or np.ndarray
+    - lmt : module or object
+    - decision : bool, default=True
+        Whether to plot decision surfaces.
+    - prob_surf : bool, default=False
+        Whether to plot probability surfaces.
+    - feature_pair : tuple of int, default=(0, 1)
+        The pair of features to use for 2D plots.
+    - original_models : list of (clf_tree, node_models) or None
+    - tag : str, default="Original"
+        Tag to identify the model variant.
+
+    Returns:
+    - None
     """
 
     configs = [

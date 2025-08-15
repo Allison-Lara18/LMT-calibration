@@ -5,11 +5,11 @@ from sklearn.preprocessing import KBinsDiscretizer
 from matplotlib.gridspec import GridSpec
 from . import logitboost_j_implementation as logitboost
 from . import composite_tree
+from . import spline_splitting as spline
+# ------------------------------------------------------------------- #
+# Package for different visualization functions regarding calibration
+# ------------------------------------------------------------------- #
 
-# ------------------------------------------------ #
-# Function to compare the different depth trees    #
-# regarding the calibration curves and hists       #
-# ------------------------------------------------ #
 def plot_combined_calibration_and_hists(
     y_test, X_test,
     y_test_ext, X_test_ext,
@@ -17,6 +17,22 @@ def plot_combined_calibration_and_hists(
     model_labels=["Shallow", "Regular", "Overfit", "Pruned"],
     n_bins=10
 ):
+    """
+    Plot calibration curves and histograms for original and extended models, tailored for the circles dataset which has the original and extended versions.
+    Using plain trees algorithms.
+    Params:
+    - y_test: Ground truth labels for the original test set
+    - X_test: Features for the original test set
+    - y_test_ext: Ground truth labels for the extended test set
+    - X_test_ext: Features for the extended test set
+    - clf_orig_list: List of original classifiers
+    - clf_ext_list: List of extended classifiers
+    - model_labels: Labels for the models (default: ["Shallow", "Regular", "Overfit", "Pruned"])
+    - n_bins: Number of bins for the histograms (default: 10)
+
+    Returns:
+    - None
+    """
     fig = plt.figure(figsize=(12, 14))
     gs = GridSpec(3, 2, figure=fig, height_ratios=[3, 1.5, 1.5])
     
@@ -76,6 +92,24 @@ def plot_lmt_combined_calibration_and_hists(
     model_labels=["Shallow", "Regular", "Overfit", "Pruned"],
     n_bins=10
 ):
+    """
+    Plot calibration curves and histograms for original and extended models, tailored for the circles dataset which has the original and extended versions.
+    Using lmt algorithm, which has the tree structure and the node models.
+    Params:
+    - X_test: Features for the original test set
+    - y_test: Ground truth labels for the original test set
+    - X_test_ext: Features for the extended test set
+    - y_test_ext: Ground truth labels for the extended test set
+    - clfs: List of original classifiers
+    - nodes: List of original node models
+    - clfs_ext: List of extended classifiers
+    - nodes_ext: List of extended node models
+    - model_labels: Labels for the models (default: ["Shallow", "Regular", "Overfit", "Pruned"])
+    - n_bins: Number of bins for the histograms (default: 10)
+
+    Returns:
+    - None
+    """
     fig = plt.figure(figsize=(12, 14))
     gs = GridSpec(3, 2, figure=fig, height_ratios=[3, 1.5, 1.5])
     
@@ -138,6 +172,18 @@ def plot_combined_calibration_and_hists_for_composites_side_by_side(
 ):
     """
     Plot calibration curve and two side-by-side histograms for two CompositeTreeClassifier models.
+    Params:
+    - y_test: Ground truth labels for the original test set
+    - X_test: Features for the original test set
+    - y_test_ext: Ground truth labels for the extended test set
+    - X_test_ext: Features for the extended test set
+    - clf_orig_list: List of original classifiers
+    - clf_ext_list: List of extended classifiers
+    - model_labels: Labels for the models (default: ["Model 0", "Model 1"])
+    - n_bins: Number of bins for the histograms (default: 10)
+
+    Returns:
+    - None
     """
     fig = plt.figure(figsize=(10, 8))
     gs = GridSpec(2, 2, figure=fig, height_ratios=[2, 1])
@@ -212,11 +258,21 @@ def plot_scatter_by_quantile(
     q_edges=None
 ):
     """
-    X: array of shape (n_samples, n_features)
-    y_proba: array of predicted probabilities (n_samples,)
-    ax: Matplotlib Axes (if None, plt.gca() is used)
-    norm: Optional Normalize instance (default: Normalize(0, n_quantiles - 1))
-    q_edges: Optional precomputed quantile edges to ensure consistency across plots
+    Plot scatter plot colored by quantiles of the given data based on its predicted probabilities.
+    Params:
+    - X: array of shape (n_samples, n_features)
+    - y_proba: array of predicted probabilities (n_samples,)
+    - n_quantiles: number of quantiles to create (default: 5)
+    - title: title of the plot (default: "Scatter by Quantile")
+    - ax: Matplotlib Axes (if None, plt.gca() is used)
+    - feature_1: index of the first feature to plot (default: 0)
+    - feature_2: index of the second feature to plot (default: 1)
+    - cmap: colormap to use (default: 'Accent')
+    - norm: Optional Normalize instance (default: Normalize(0, n_quantiles - 1))
+    - q_edges: Optional precomputed quantile edges to ensure consistency across plots
+
+    Returns:
+    - None
     """
     if ax is None:
         ax = plt.gca()
@@ -268,16 +324,23 @@ def plot_pred_vs_true(
     figsize: tuple = (12, 5)
 ):
     """
+    Plot predicted vs true probabilities for different models based on the given dictionary model.
     models: 
       - if model_type=='tree': { name: clf, ... }
       - if model_type=='lmt' : { name: (clf, nodes), ... }
       - if model_type=='logitboost': { name: (learners, J), ... }
       - if model_type=='composite': { name: (clf, nodes), ... }
+      - if model_type=='spline_tree': { name: (clf), ... }
       - if model_type=='spline_lmt': { name: (clf, nodes), ... }
-    p_true: array of true probabilities, shape (n_samples,)
-    X_test: feature matrix, shape (n_samples, n_features)
-    model_type: 'tree', 'lmt' or 'logitboost'
-    orig_cols: how many cols from X_test to use for models tagged as '(orig)'
+
+    Params:
+    - p_true: array of true probabilities, shape (n_samples,)
+    - X_test: feature matrix, shape (n_samples, n_features)
+    - model_type: 'tree', 'lmt', 'logitboost', 'composite', 'spline_tree', 'spline_lmt'
+    - orig_cols: how many cols from X_test to use for models tagged as '(orig)'
+
+    Returns:
+    - None
     """
     import matplotlib.cm as cm
     colors = cm.get_cmap("tab10")
