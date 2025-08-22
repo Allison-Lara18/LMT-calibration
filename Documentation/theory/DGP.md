@@ -34,7 +34,7 @@ Here the decision boundary is the circle $\lVert x\rVert_2^2=r_0$ (i.e., radius 
 * As $\alpha\to\infty$, $\sigma(\eta)$ approaches a step function at radius $\sqrt{r_0}$: points just inside get $\rho_i\approx 0$, just outside $\rho_i\approx 1$.
 * For small $\alpha$, the transition is gradual, creating a fuzzy band around the circle where $\rho_i$ moves smoothly from 0 to 1.
 
- ![alt text](images/dgp_circles.png)
+ ![alt text](../images/dgp_circles.png)
 
 
 **Notation (clarification)**
@@ -70,4 +70,4 @@ The decision boundary is the diamond $|x_1|+|x_2|=r_0$:
 * If $|X_{1,i}|+|X_{2,i}|>r_0$, then $\rho_i>0.5$.
 
 As before, $\alpha$ governs the sharpness of the transition.
-![alt text](images/dgp_absolute.png)
+![alt text](../images/dgp_absolute.png)

@@ -2,6 +2,8 @@
 Binary-classifier outputs are often interpreted as probabilities. In sensitive domains (credit-risk, healthcare, insurance) we need those probabilities to be calibrated, i.e., the predicted 0-to-1 score should match the observed event frequency.  
 Classic evaluation metrics (accuracy, AUC, F1) ignore that requirement because a model can rank well and still output over or under confident scores.
 
+> **Disclaimer**
+The following notes are regarding just the binary case in classification.
 ---
 
 ### 1  What is calibration?

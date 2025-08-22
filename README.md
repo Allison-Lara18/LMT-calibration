@@ -12,7 +12,7 @@ Repository for my MITACS summer internship at Université du Québec à Montréa
 
 Twenty years ago, Landwehr, Hall & Frank (2005) proposed combining classification trees and regression models on categorical variables (particularly logistic regression) into **Logistic Model Trees (LMTs)** — trees whose leaves contain linear regression functions.
 
-This project revisits that idea from a **calibration** perspective, exploring whether these trees can be improved and combined in ensemble approaches to enhance predictive performance.  
+This project revisits that idea from a **calibration** perspective, focusing on the confidence from binary probabilistic classifiers rather than predicted labels.
 
 We implement the algorithms (in Python) and evaluate them across various synthetic and real datasets, with a focus on:
 - **Reproducing** the original LMT algorithm from Landwehr et al. (2005)
@@ -54,7 +54,7 @@ Below is a high-level overview of each folder in the repository:
 - **`Documentation/`**  
   Markdown documents with detailed descriptions of each folder and notebook, as well as theoretical background.
 
-- **`Papers/`**  
+- **`References/`**  
   Reference papers used in the project.
 
 - **`lmt_pkg/`**  

@@ -118,30 +118,30 @@ Returns the pruned tree and the set of pruned node ids.
   An example how does it look like is shown below:
   <br>
 
-  ![alt text](images/example_tree.png)
+  ![alt text](../images/example_tree.png)
   <br>
 
 * `plot_tree_decision_surface(X, y, feature_pair, size='regular', pruning=False, feature_names=None, class_names=None, plot_step=0.02, cmap=plt.cm.RdYlBu, ax=None)`
   For two chosen features, shows the **tree’s hard regions**.
   An example is shown below:
   
-  ![alt text](images/example_tree_decision.png)
+  ![alt text](../images/example_tree_decision.png)
   <br>
 
 * `plot_decision_regions_lmt(X, y, clf_lmt, nodes_lmt, tree_model='original', feature_pair=(0,1), fill_value='mean', grid_steps=200, cmap='RdYlBu', ax=None, title=...)`
   2D hard decision regions from the **LMT** predictions (original or, if you built one, a composite-tree variant).
-  ![alt text](images/example_lmt_decision.png)
+  ![alt text](../images/example_lmt_decision.png)
   <br>
 
 * `plot_probability_surface_tree(...)` and `plot_probability_surface_lmt(...)`
   Smooth **probability surfaces** $P(y=c)$ on a 2D plane spanned by a feature pair; other features are fixed to the mean (or user-specified `fixed_vals`). Training points are overlaid and colored by their predicted probabilities.
   Both examples are shown below:
   For Trees
-  ![alt text](images/example_tree_prob.png)
+  ![alt text](../images/example_tree_prob.png)
   <br>
 
   For LMT
-  ![alt text](images/example_lmt_prob.png)
+  ![alt text](../images/example_lmt_prob.png)
 
 ---
 

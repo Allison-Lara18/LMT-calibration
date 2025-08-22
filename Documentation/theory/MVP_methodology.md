@@ -16,7 +16,7 @@ Dataset taken from the **Data Generation Process** (`DGP.md`) with parameters:
  - `alpha = 2`
  - `r0 = 1.5` 
 
-![alt text](images/dgp_absolute.png)
+![alt text](../images/dgp_absolute.png)
 
 ### Tree growth (plain Linear–Spline Tree)
 
@@ -127,45 +127,45 @@ We report, for each stage:
 
 1. **Decision regions — Plain trees**
     
-    ![alt text](images/region_plain.png)
+    ![alt text](../images/region_plain.png)
    * Axis-aligned regions induced by Linear–Spline Tree with AUC vs. Brier split scoring.   
    <br>
 
-   ![alt text](images/calibration_plain.png)
+   ![alt text](../images/calibration_plain.png)
    * Calibration curves and probability histograms induced by Linear–Spline Tree with AUC vs. Brier split scoring.  
    <br>
 
-   ![alt text](images/true_plain.png)
+   ![alt text](../images/true_plain.png)
    * True vs Predicted probabilities scatter plot and true probabilities histogram induced by Linear–Spline Tree with AUC vs. Brier split scoring. 
    <br>
 
 
 2. **Decision regions — LMT at nodes (unpruned)**
     
-    ![alt text](images/region_lmt.png)
+    ![alt text](../images/region_lmt.png)
    * Effect of LogitBoost-at-node on local decision surfaces.
    <br>
 
-   ![alt text](images/calibration_lmt.png)
+   ![alt text](../images/calibration_lmt.png)
    * Calibration curves and probability histograms induced by full LMT with AUC vs. Brier split scoring. 
    <br>
 
-   ![alt text](images/true_lmt.png)
+   ![alt text](../images/true_lmt.png)
    * True vs Predicted probailities induced by full LMT with AUC vs. Brier split scoring. 
    <br>
 
 
 3. **Decision regions — Pruned LMTs**
 
-   ![alt text](images/region_pruned.png)
+   ![alt text](../images/region_pruned.png)
    * Subtree simplification with comparable boundaries post-pruning.
    <br>
 
-   ![alt text](images/calibration_pruned.png)
+   ![alt text](../images/calibration_pruned.png)
    * Calibration curves and histograms for pruned trees with Brier score.
    <br>
 
-   ![alt text](images/true_pruned.png)
+   ![alt text](../images/true_pruned.png)
    * True vs Predicted probailities induced by pruned LMT. 
 
 ---
