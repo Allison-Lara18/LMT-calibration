@@ -13,11 +13,7 @@ Two helper functions are provided.
 #### a) One threshold per feature: `find_best_cuts(X, y, *, max_cuts=2, criterion='entropy', n_bins=10)`
 
 * **Candidate thresholds**  
-  For each feature $x_j$, generate `n_bins` evenly spaced thresholds in the closed range
-
-$$
-[\text{quantile}_{0.05}(x_j), \text{quantile}_{0.95}(x_j)]
-$$
+  For each feature $x_j$, generate `n_bins` evenly spaced thresholds in the closed range between the quantile 0.05 and 0.95.
 
 This avoids extreme outliers and degenerate splits at the min/max.
 

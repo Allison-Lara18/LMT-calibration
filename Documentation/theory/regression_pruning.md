@@ -23,11 +23,13 @@ $$
 \mathrm{AUC}(M_v;S_v)=\text{ROC-AUC}_{\mathrm{binary}}(y_{S_v},\, s_{S_v})
 $$
 
+
 For $C > 2$ (at least two classes present):
 
 $$
 \mathrm{AUC}(M_v;S_v)=\text{ROC-AUC}_{\mathrm{macro\ OvR}}(y_{S_v},\, P_{v,S_v})
 $$
+
 
 Fallback (fewer than two classes present):
 

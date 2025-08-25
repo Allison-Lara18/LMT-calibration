@@ -61,14 +61,7 @@ Parameters $(\beta_0,\beta_1,\beta_2)$ are estimated by **logistic regression** 
 
 For each feature $j$ and candidate knot $\tau$ (e.g., percentiles of $\{\,x_{i,j}\,\}_{i\in\mathcal{I}}$; typically 10%–90% or unique midpoints):
 
-* define the **hard split**:
-
-$$
-\mathcal{I}_L = \{ i \in \mathcal{I} : x_{i,j} \leq \tau \},
-\mathcal{I}_R = \{ i \in \mathcal{I} : x_{i,j} > \tau \}.
-$$
-
-left and right children.
+* define the **hard split**: Points $\leq \tau$ are going to be $\mathcal{I}_L$ and otherwise $\mathcal{I}_R$.
 
 * enforce **minimum child size**: $|\mathcal{I}_L | \geq \text{min samples}$ and $|\mathcal{I}_R | \geq \text{min samples}$; otherwise the split is invalid.
 
@@ -80,11 +73,7 @@ Fit the GLM once for $(j,\tau)$ on the **parent** node’s data; compute its pre
 Evaluate a metric **within each child**:
 
 * **AUC** on $\mathcal{I}_L$ and $\mathcal{I}_R$ (requires at least one positive and one negative in the child; otherwise the child’s AUC is undefined and the split is skipped), or
-* **Brier score** 
-
-$$
-\mathrm{Brier}=\frac{1}{|\mathcal{I}_\bullet|}\sum_{i\in\mathcal{I}_\bullet}(p_i-y_i)^2, \bullet\in\{L,R\}.
-$$
+* **Brier score**: Compute traditional Brier-Score on each separate side.
 
 Combine by size-weighted aggregation:
 
