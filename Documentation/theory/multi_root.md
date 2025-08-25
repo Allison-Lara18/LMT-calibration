@@ -14,36 +14,39 @@ Two helper functions are provided.
 
 * **Candidate thresholds**  
   For each feature $x_j$, generate `n_bins` evenly spaced thresholds in the closed range
-  $\bigl[\operatorname{quantile}_{5\%}(x_j),\ \operatorname{quantile}_{95\%}(x_j)\bigr]$.  
+  $[\text{quantile}_{5\%}(x_j),\ \text{quantile}_{95\%}(x_j)]$.  
   This avoids extreme outliers and degenerate splits at the min/max.
 
 * **Score of a single threshold**  
   For a candidate threshold $t$ on feature $j$, split the labels into
 
-  $$
-  \text{left}=\{\,y_i:\ x_{ij}\le t\,\},\qquad
-  \text{right}=\{\,y_i:\ x_{ij}>t\,\},
-  $$
+$$
+\text{left}=\{\,y_i:\ x_{ij}\le t\,\},
+\text{right}=\{\,y_i:\ x_{ij}>t\,\},
+$$
+
   skipping empty sides. Let $p_L=\tfrac{|\text{left}|}{|y|}$ and $p_R=1-p_L$.  
+
   The function computes the **information gain**
-  $$
-  \text{gain}(t)\;=\;I(y)\;-\;\bigl(p_L\,I(\text{left})+p_R\,I(\text{right})\bigr),
-  $$
+
+$$
+\text{gain}(t)=I(y) - \bigl(p_L I(\text{left}) + p_R I(\text{right})\bigr),
+$$
 
   where the impurity $I(\cdot)$ is either
 
   * **Entropy** (base-2, with a tiny epsilon inside the log for numerical safety):
 
-    $$
-    H(v)\;=\;-\sum_{c\in\mathcal{C}}\hat p_c(v)\,\log_2\!\bigl(\hat p_c(v)+\varepsilon\bigr),
-    \qquad
-    \hat p_c(v)=\frac{\bigl|\{\,i:\ v_i=c\,\}\bigr|}{|v|},
-    $$
+$$
+H(v) = -\sum_{c\in\mathcal{C}}\hat p_c(v)\,\log_2 \bigl(\hat p_c(v)+\varepsilon\bigr),
+\hat p_c(v)=\frac{\bigl|\{\,i:\ v_i=c\,\}\bigr|}{|v|},
+$$
+
   * **Gini**:
 
-    $$
-    G(v)\;=\;1-\sum_{c\in\mathcal{C}}\hat p_c(v)^2.
-    $$
+$$
+G(v) = 1-\sum_{c\in\mathcal{C}}\hat p_c(v)^2.
+$$
 
   The best $t$ for each feature is the one with maximal gain.  
   (In the code, classes $\mathcal{C}$ are taken from `np.unique(y)`.)
@@ -71,7 +74,7 @@ Two helper functions are provided.
 
 ### 2) Partition the space into regions
 
-* **If you cut $m$ distinct features with one threshold each** (e.g., $x_{f_1}\le t_1$, $x_{f_2}\le t_2$, …): you get $2^m$ axis-aligned, disjoint regions, one for every True/False combination of the $m$ “$\le$” tests.
+* **If you cut $m$ distinct features with one threshold each** (e.g., $x_{f_1}\leq t_1$, $x_{f_2}\leq t_2$, …): you get $2^m$ axis-aligned, disjoint regions, one for every True/False combination of the $m$ “$\leq$” tests.
 
 * **If you allow multiple thresholds per feature** (say feature $j$ has $k_j$ thresholds), that feature is split into $k_j+1$ intervals
   $(-\infty, t_{j1}],\ (t_{j1}, t_{j2}],\ \ldots,\ (t_{j\,k_j}, \infty)$.  

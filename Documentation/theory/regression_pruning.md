@@ -9,9 +9,9 @@
   * Let $F_v(x)\in\mathbb{R}^C$ be the additive score vector from LogitBoost and $p_v(x)=\text{softmax}\!\big(F_v(x)\big)\in\Delta^{C-1}$.
 * For labeled data $S=\{(x_i,y_i)\}_{i=1}^n$, the **reach set** of $v$ is
 
-    $$
-    S_v=\{\, i :\; x_i \text{ routes to } v \,\},\qquad n_v:=|S_v|.
-    $$
+$$
+S_v=\{\, i :\; x_i \text{ routes to } v \,\}, n_v:=|S_v|.
+$$
 
   Collect the node probabilities as $P_{v,S_v}=\big[p_v(x_i)\big]_{i\in S_v}\in\mathbb{R}^{n_v\times C}$.
 
@@ -20,8 +20,8 @@
 $$
 \mathrm{AUC}(M_v; S_v)=
 \begin{cases}
-\text{ROC-AUC}_{\text{binary}}\bigl(y_{S_v},\, s_{S_v}\bigr), & \text{if } C=2 \text{ and both classes present},\\[4pt]
-\text{ROC-AUC}_{\text{macro OvR}}\bigl(y_{S_v},\, P_{v,S_v}\bigr), & \text{if } C>2 \text{ and at least two classes present},\\[4pt]
+\text{ROC-AUC}_{\text{binary}}\bigl(y_{S_v},\, s_{S_v}\bigr), & \text{if } C=2 \text{ and both classes present},\\
+\text{ROC-AUC}_{\text{macro OvR}}\bigl(y_{S_v},\, P_{v,S_v}\bigr), & \text{if } C>2 \text{ and at least two classes present},\\
 1, & \text{if fewer than two classes present (random baseline).}
 \end{cases}
 $$
@@ -67,7 +67,7 @@ $$
 
 * **Binary target ($C=2$)**: standard ROC AUC on a **1D score** (e.g., $p(\text{positive})$).
 * **Multiclass target ($C>2$)**: macro-averaged OvR ROC AUC with scikit-learn (`multi_class="ovr", average="macro"`).
-  *(In the current implementation, AUC is only computed when the subset has $\ge$ 2 classes and $\ge$ 5 samples; otherwise, the code skips the node via `continue`—it does **not** substitute 0.5.)*
+  *(In the current implementation, AUC is only computed when the subset has $\geq$ 2 classes and $\geq$ 5 samples; otherwise, the code skips the node via `continue`—it does **not** substitute 0.5.)*
 
 **Local gain at node $v$ with children $L,R$.**
 
@@ -138,9 +138,9 @@ $$
 4. **Fold best.** $\displaystyle \delta_k \in \underset{\delta\in\Delta}{\arg\min}\ \mathcal{L}^{(k)}(\delta)$.
 5. **Final selection.** Mean of fold-bests (as specified):
 
-   $$
-   \delta^*=\frac{1}{K}\sum_{k=1}^K \delta_k
-   $$
+$$
+\delta^*=\frac{1}{K}\sum_{k=1}^K \delta_k
+$$
 
 
 ---
@@ -149,9 +149,9 @@ $$
 
 * **Explicit AUC policy.** Binary targets → **standard** ROC AUC on 1D scores; multiclass targets → **macro OvR** ROC AUC. If a subset has $<2$ classes, use $1$.
 * **Reasonable $\delta$ ranges.** Node-Quality: $[0.5,1)$. Local-Gain: small $\delta\ge 0$ (e.g., $0$–$0.02$).
-* **Strict comparisons.** Keep “$>\delta$” (prune) for Node-Quality and “$<\delta$” (prune) for Local-Gain for deterministic ties.
+* **Strict comparisons.** Keep “$>\delta$” (prune) for Node-Quality and “$\delta$” (prune) for Local-Gain for deterministic ties.
 * **No refitting.** Pruning **does not** re-train LogitBoost models; it only removes subtrees.
-* **Efficiency.** Precompute reach sets; each AUC is $O(n_v)$–$O(n_v\log n_v)$ depending on implementation.
+* **Efficiency.** Precompute reach sets; each AUC is $O(n_v) - O(n_v \log n_v)$ depending on implementation.
 
 ---
 
