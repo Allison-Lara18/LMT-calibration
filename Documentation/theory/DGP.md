@@ -46,10 +46,12 @@ $$
 If $x_i=(X_{1,i},X_{2,i})^\top$, then
 
 $$
-||x_i||_2^2 = X_{1,i}^2 + X_{2,i}^2
+\lVert x_i\rVert_2^2 = X_{1,i}^2 +X_{2,i}^2
 $$
 
-which is the squared distance from the origin. In polar coordinates this equals $r^2$ ; hence the boundary $||x||_2^2 = r_0$ is the circle of radius $\sqrt{r_0}$. (More generally, for $x_i \in \mathbb{R}^d$, $||x_i||_2^2 = \sum_{j=1}^d X_{j,i}^2$ .)
+
+which is the squared distance from the origin. In polar coordinates this equals $r^2$; hence the boundary $\lVert x\rVert_2^2=r_0$ is the circle of radius $\sqrt{r_0}$. (More generally, for $x_i \in \mathbb{R}^d$, $\lVert x_i\rVert_2^2=\sum_{j=1}^d x_{j,i}^2$.)
+
 
 ---
 

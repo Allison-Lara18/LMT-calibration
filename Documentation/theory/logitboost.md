@@ -49,10 +49,10 @@ $$
 * After fitting every class, stack the $J$ fitted vectors $\hat{f}_{mj} \in \mathbb{R}^N$, compute their mean across classes, and **center**:
 
 $$
-\tilde{f}_{mj} = \frac{J-1}{J} (\hat{f}_{mj} - \frac{1}{J} \sum_{k=0}^{J-1} \hat{f}_{mk})
+\tilde{f}_{mj}=\frac{J-1}{J}\left(\hat{f}_{mj}-\frac{1}{J}\sum_{k=0}^{J-1}\hat{f}_{mk}\right)
 $$
 
-  This guarantees $\sum_j \tilde{f}_{mj}=0$ for each sample.
+This guarantees $\sum_j \tilde{f}_{mj}=0$ for each sample.
 
 * Update scores and probabilities:
 

@@ -72,9 +72,9 @@
    * **Original (BFS) AUC-δ:** keep node if `AUC ≥ δ`.
    * **Local gain rule:** `regression_pruning_gain_local(...)` keeps a split only if
 
-  $$
-  \underbrace{\frac{n_l}{n}\,\text{AUC}_l+\frac{n_r}{n}\,\text{AUC}_r}_{\text{children (weighted)}}\;-\;\text{AUC}_{\text{parent}} \geq \delta
-  $$
+$$
+\underbrace{\frac{n_L}{n}\,\text{AUC}_L + \frac{n_R}{n}\,\text{AUC}_R}_{\text{children (weighted)}} \;-\; \text{AUC}_{\text{parent}} \;\geq\; \delta
+$$
 
 
 3. **Cross-validation to pick δ**
