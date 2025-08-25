@@ -13,7 +13,7 @@ Learn a decision tree for $y\in\{0,1\}$ where every internal split:
 
 ## 2) Setup and notation
 
-Data $D = \{ (x_i, y_i) \}_{i=1}^n$ , with $x_i = ( x_{i,1}, \dots , x_{i,d} ) \in \mathbb{R}^d$, $y_i \in \{ 0,1 \}$.
+Data $D = \{(x_i, y_i)\}_{i=1}^n$, with $x_i = (x_{i,1}, \ldots, x_{i,d}) \in \mathbb{R}^d$ , $y_i \in \{ 0,1 \}$.
 
 For $a\in\mathbb{R}$, define the truncated linear (ReLU) term $(a)_+=\max\{0,a\}$.
 
@@ -56,8 +56,11 @@ Parameters $(\beta_0,\beta_1,\beta_2)$ are estimated by **logistic regression** 
 For each feature $j$ and candidate knot $\tau$ (e.g., percentiles of $\{\,x_{i,j}\,\}_{i\in\mathcal{I}}$; typically 10%–90% or unique midpoints):
 
 * define the **hard split**:
-  * Left child $\mathcal{I}_L = \{ i \in \mathcal{I} : x_{i,j} \leq \tau \}$,
-  * Right child $\mathcal{I}_R = \{ i \in \mathcal{I} : x_{i,j} > \tau \}$.
+
+$$
+\mathcal{I}_L = \{ i \in \mathcal{I} : x_{i,j} \leq \tau \},
+\mathcal{I}_R = \{ i \in \mathcal{I} : x_{i,j} > \tau \}.
+$$
 
 * enforce **minimum child size**: $|\mathcal{I}_L | \geq \text{min samples}$ and $|\mathcal{I}_R | \geq \text{min samples}$; otherwise the split is invalid.
 
@@ -69,14 +72,18 @@ Fit the GLM once for $(j,\tau)$ on the **parent** node’s data; compute its pre
 Evaluate a metric **within each child**:
 
 * **AUC** on $\mathcal{I}_L$ and $\mathcal{I}_R$ (requires at least one positive and one negative in the child; otherwise the child’s AUC is undefined and the split is skipped), or
-* **Brier score** $\text{Brier} = \frac{1}{|\mathcal{I}_\bullet|} \sum_{i \in \mathcal{I}_\bullet}(p_i-y_i)^2$ for $\bullet\in\{L,R\}$.
+* **Brier score** 
+
+$$
+\text{Brier} = \frac{1}{ \mathcal{I}_\bullet }\,\sum_{i \in \mathcal{I}_\bullet} (p_i - y_i)^2, \bullet \in \{L,R\}
+$$
 
 Combine by size-weighted aggregation:
 
 $$
 \text{Score}(j,\tau)=
 \begin{cases}
-\displaystyle \frac{n_L}{n}\,\text{AUC}_L+\frac{n_R}{n}\,\text{AUC}_R, & \text{maximize},\\[1.0em]
+\displaystyle \frac{n_L}{n}\,\text{AUC}_L+\frac{n_R}{n}\,\text{AUC}_R, & \text{maximize},\\
 \displaystyle \frac{n_L}{n}\,\text{Brier}_L+\frac{n_R}{n}\,\text{Brier}_R, & \text{minimize}.
 \end{cases}
 $$

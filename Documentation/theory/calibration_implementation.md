@@ -15,11 +15,11 @@ These show how predicted probabilities align with observed frequencies.
 3. For each bin compute
 
 $$
-\bar{p}_m=\frac{1}{N_m}\sum_{i\in B_m} p_i,
-\hat{\pi}_m=\frac{1}{N_m}\sum_{i\in B_m} y_i.
+\tilde{p}_m = \frac{1}{N_m} \sum_{i \in B_m} p_i,
+\hat{\pi}_m = \frac{1}{N_m} \sum_{i\in B_m} y_i.
 $$
 
-4. Plot the points $(\bar{p}_m,\hat{\pi}_m)$, optionally joined by line segments.
+4. Plot the points $(\tilde{p}_m,\hat{\pi}_m)$, optionally joined by line segments.
    The diagonal $y=x$ is the ideal calibration line.
 
 **Reading the plot**

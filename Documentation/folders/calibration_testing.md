@@ -17,10 +17,15 @@
 ## Key Concepts
 
 * **Why “known probability”?** With synthetic data you can write down $p^*(x)$. This lets you score calibration **without label noise**:
+
   * **True-Brier:** $\mathbb{E}\bigl[(\hat{p}(x)-p^*(x))^2\bigr]$
+
   * **True log-loss (cross-entropy to $p^*$):** $\mathbb{E}\bigl[-\,p^*(x)\,\log \hat{p}(x)\;-\;\bigl(1-\hat{p}(x)\bigr)\,\log\bigl(1-\hat{p}(x)\bigr)\bigr]$
+
   * **Population ECE:** bin by $\hat{p}$, compare $\overline{\hat{p}}$ vs. $\overline{p^*}$ per bin.
-* **Empirical vs population metrics.** You can also compute the usual empirical metrics against labels $y\sim \operatorname{Bernoulli}\!\bigl(p^*(x)\bigr)$. Expect **higher variance** than the population (true-$p$) versions.
+
+* **Empirical vs population metrics.** You can also compute the usual empirical metrics against labels $y\sim \text{Bernoulli} (p^*(x))$. Expect **higher variance** than the population (true - $p$ ) versions.
+
 * **What you compare.** Any probabilistic classifier(s): trees/LMT, logistic regression. Same interface: produce $\hat{p}(x)$, compute metrics vs. $p^*$ and vs. labels, and plot.
 
 ---

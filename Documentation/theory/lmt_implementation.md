@@ -149,7 +149,9 @@ Returns the pruned tree and the set of pruned node ids.
 
 * **Numerics**: LogitBoost in the attached code uses **probability clipping** and a stable softmax; degenerate leaves (single class) are handled explicitly.
 * **Warm-starts**: Passing a parent’s model to children provides **faster convergence** and more stable estimates in small nodes.
-* **When to stop**: Prefer **Variant B** for speed; it uses the root’s CV-selected $M^{*}$. Use **Variant A** when you want the *per-node* $M^{*}$ chosen by local CV.
+* **When to stop**: 
+  - Prefer **Variant B** for speed; it uses the root’s CV-selected $M^*$.
+  - Use **Variant A** when you want the *per-node* $M^*$ chosen by local CV.
 * **Paper settings**: If you want the closest analogue to the original LMT paper, use `size='regular'` and `pruning=True`, entropy criterion, and SimpleLogistic as described above.
 
 That’s the full picture: entropy tree for routing; LogitBoost models at nodes; optional cost-complexity + AUC-based pruning; and plot helpers for structure, hard regions, and probability surfaces.

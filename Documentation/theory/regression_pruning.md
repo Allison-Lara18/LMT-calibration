@@ -18,11 +18,11 @@ $$
 ### Node AUC (explicit binary vs. multiclass rule)
 
 $$
-\mathrm{AUC}(M_v; S_v)=
+\text{AUC}(M_v; S_v)=
 \begin{cases}
-\text{ROC-AUC}_{\text{binary}}\bigl(y_{S_v},\, s_{S_v}\bigr), & \text{if } C=2 \text{ and both classes present},\\
-\text{ROC-AUC}_{\text{macro OvR}}\bigl(y_{S_v},\, P_{v,S_v}\bigr), & \text{if } C>2 \text{ and at least two classes present},\\
-1, & \text{if fewer than two classes present (random baseline).}
+\displaystyle \text{ROC-AUC}_{\text{binary}} (y_{S_v},\, s_{S_v}), & \text{if } C=2 \text{ and both classes present},\\
+\displaystyle \text{ROC-AUC}_{\text{macro OvR}}\bigl(y_{S_v},\, P_{v,S_v}\bigr), & \text{if } C>2 \text{ and at least two classes present},\\
+\displaystyle 1, & \text{if fewer than two classes present (random baseline).}
 \end{cases}
 $$
 
@@ -149,7 +149,7 @@ $$
 
 * **Explicit AUC policy.** Binary targets → **standard** ROC AUC on 1D scores; multiclass targets → **macro OvR** ROC AUC. If a subset has $<2$ classes, use $1$.
 * **Reasonable $\delta$ ranges.** Node-Quality: $[0.5,1)$. Local-Gain: small $\delta\ge 0$ (e.g., $0$–$0.02$).
-* **Strict comparisons.** Keep “$>\delta$” (prune) for Node-Quality and “$\delta$” (prune) for Local-Gain for deterministic ties.
+* **Strict comparisons.** Keep $ > \delta$ (prune) for Node-Quality and $\delta$ (prune) for Local-Gain for deterministic ties.
 * **No refitting.** Pruning **does not** re-train LogitBoost models; it only removes subtrees.
 * **Efficiency.** Precompute reach sets; each AUC is $O(n_v) - O(n_v \log n_v)$ depending on implementation.
 
