@@ -16,11 +16,10 @@ Two helper functions are provided.
   For each feature $x_j$, generate `n_bins` evenly spaced thresholds in the closed range
 
 $$
-[\text{quantile}_{5}(x_j), \text{quantile}_{95}(x_j)]
+[\text{quantile}_{0.05}(x_j), \text{quantile}_{0.95}(x_j)]
 $$
 
-
-  This avoids extreme outliers and degenerate splits at the min/max.
+This avoids extreme outliers and degenerate splits at the min/max.
 
 * **Score of a single threshold**  
   For a candidate threshold $t$ on feature $j$, split the labels into

@@ -73,9 +73,8 @@
    * **Local gain rule:** `regression_pruning_gain_local(...)` keeps a split only if
 
 $$
-\underbrace{\frac{n_L}{n}\,\text{AUC}_L + \frac{n_R}{n}\,\text{AUC}_R}_{\text{children (weighted)}} \;-\; \text{AUC}_{\text{parent}} \;\geq\; \delta
+\frac{n_L}{n} \mathrm{AUC}_L + \frac{n_R}{n} \mathrm{AUC}_R - \mathrm{AUC}_{\mathrm{parent}} \geq \delta
 $$
-
 
 3. **Cross-validation to pick δ**
 

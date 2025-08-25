@@ -17,14 +17,24 @@ $$
 
 ### Node AUC (explicit binary vs. multiclass rule)
 
+For $C = 2$ (both classes present):
+
 $$
-\text{AUC}(M_v; S_v)=
-\begin{cases}
-\text{ROC\text{-}AUC}_{\text{binary}}\!\bigl(y_{S_v},\, s_{S_v}\bigr), & \text{if } C=2 \text{ and both classes are present},\\
-\text{ROC\text{-}AUC}_{\text{macro OvR}}\!\bigl(y_{S_v},\, P_{v,S_v}\bigr), & \text{if } C>2 \text{ and at least two classes are present},\\
-1, & \text{if fewer than two classes are present (random baseline).}
-\end{cases}
+\mathrm{AUC}(M_v;S_v)=\text{ROC-AUC}_{\mathrm{binary}}(y_{S_v},\, s_{S_v})
 $$
+
+For $C > 2$ (at least two classes present):
+
+$$
+\mathrm{AUC}(M_v;S_v)=\text{ROC-AUC}_{\mathrm{macro\ OvR}}(y_{S_v},\, P_{v,S_v})
+$$
+
+Fallback (fewer than two classes present):
+
+$$
+\mathrm{AUC}(M_v;S_v)=1
+$$
+
 
 
 * **Binary case ($C=2$)**: use the **standard** ROC AUC on a **1D score** $s_i := p_v\!\big(x_i,\, \text{positive}\big)$.

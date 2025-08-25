@@ -13,7 +13,13 @@ Learn a decision tree for $y\in\{0,1\}$ where every internal split:
 
 ## 2) Setup and notation
 
-Data $D = \{(x_i, y_i)\}_{i=1}^n$, with $x_i = (x_{i,1}, \ldots, x_{i,d}) \in \mathbb{R}^d$ , $y_i \in \{ 0,1 \}$.
+Data 
+
+$$
+D=\{(x_i, y_i)\}_{i=1}^n
+$$
+
+with $x_i=(x_{i,1}, \ldots, x_{i,d}) \in \mathbb{R}^d$ , $y_i \in \{ 0,1 \}$.
 
 For $a\in\mathbb{R}$, define the truncated linear (ReLU) term $(a)_+=\max\{0,a\}$.
 
@@ -62,6 +68,8 @@ $$
 \mathcal{I}_R = \{ i \in \mathcal{I} : x_{i,j} > \tau \}.
 $$
 
+left and right children.
+
 * enforce **minimum child size**: $|\mathcal{I}_L | \geq \text{min samples}$ and $|\mathcal{I}_R | \geq \text{min samples}$; otherwise the split is invalid.
 
 ---
@@ -75,7 +83,7 @@ Evaluate a metric **within each child**:
 * **Brier score** 
 
 $$
-\text{Brier} = \frac{1}{ \mathcal{I}_\bullet }\,\sum_{i \in \mathcal{I}_\bullet} (p_i - y_i)^2, \bullet \in \{L,R\}
+\mathrm{Brier}=\frac{1}{|\mathcal{I}_\bullet|}\sum_{i\in\mathcal{I}_\bullet}(p_i-y_i)^2, \bullet\in\{L,R\}.
 $$
 
 Combine by size-weighted aggregation:
