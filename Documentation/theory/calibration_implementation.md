@@ -12,15 +12,7 @@ These show how predicted probabilities align with observed frequencies.
 
 1. Partition $[0,1]$ into $M$ equal-width bins $I_m=\bigl(\tfrac{m-1}{M},\,\tfrac{m}{M}\bigr]$.
 2. Let $B_m=\{\, i:\ p_i\in I_m \,\}$ and $N_m=|B_m|$.
-3. For each bin compute
-
-$$
-\tilde{p}_m=\frac{1}{N_m}\sum_{i \in B_m} p_i,
-\hat{\pi}_m=\frac{1}{N_m}\sum_{i \in B_m} y_i.
-$$
-
-
-bin-wise averages.
+3. For each bin compute bin-wise averages given by $\tilde{p}_m=\frac{1}{N_m}\sum_{i \in B_m} p_i$ and $\hat{\pi}_m=\frac{1}{N_m}\sum_{i \in B_m} y_i$.
 
 4. Plot the points $(\tilde{p}_m,\hat{\pi}_m)$, optionally joined by line segments.
    The diagonal $y=x$ is the ideal calibration line.
