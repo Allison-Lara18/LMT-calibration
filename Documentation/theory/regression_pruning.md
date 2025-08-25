@@ -6,12 +6,11 @@
 * Class set $\mathcal{Y}=\{1,\dots,C\}$ with $C\ge 2$.
 * Each node $v$ carries its **own** LogitBoost model $M_v$, fitted during LMT induction on the node’s training reach set, and **frozen** during pruning.
 
-  * Let $F_v(x)\in\mathbb{R}^C$ be the additive score vector from LogitBoost and $p_v(x)=\operatorname{softmax}\!\big(F_v(x)\big)\in\Delta^{C-1}$.
+  * Let $F_v(x)\in\mathbb{R}^C$ be the additive score vector from LogitBoost and $p_v(x)=\text{softmax}\!\big(F_v(x)\big)\in\Delta^{C-1}$.
 * For labeled data $S=\{(x_i,y_i)\}_{i=1}^n$, the **reach set** of $v$ is
-
-  $$
-  S_v=\{\, i :\; x_i \text{ routes to } v \,\},\qquad n_v:=|S_v|.
-  $$
+    $$
+    S_v=\{\, i :\; x_i \text{ routes to } v \,\},\qquad n_v:=|S_v|.
+    $$
 
   Collect the node probabilities as $P_{v,S_v}=\big[p_v(x_i)\big]_{i\in S_v}\in\mathbb{R}^{n_v\times C}$.
 
@@ -20,8 +19,8 @@
 $$
 \mathrm{AUC}(M_v; S_v)=
 \begin{cases}
-\text{ROC-AUC}_{\text{binary}}\!\big(y_{S_v},\, s_{S_v}\big), & \text{if } C=2 \text{ and both classes present},\\[4pt]
-\text{ROC-AUC}_{\text{macro OvR}}\!\big(y_{S_v},\, P_{v,S_v}\big), & \text{if } C>2 \text{ and at least two classes present},\\[4pt]
+\text{ROC-AUC}_{\text{binary}}\!\big(y_{S_v},\, s_{S_v}\big), & \text{if } C=2 \text{ and both classes present},\\
+\text{ROC-AUC}_{\text{macro OvR}}\!\big(y_{S_v},\, P_{v,S_v}\big), & \text{if } C>2 \text{ and at least two classes present},\\
 1, & \text{if fewer than two classes present (random baseline).}
 \end{cases}
 $$
