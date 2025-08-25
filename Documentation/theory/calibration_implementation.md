@@ -14,10 +14,11 @@ These show how predicted probabilities align with observed frequencies.
 2. Let $B_m=\{\, i:\ p_i\in I_m \,\}$ and $N_m=|B_m|$.
 3. For each bin compute
 
-   $$
-   \bar{p}_m=\frac{1}{N_m}\sum_{i\in B_m} p_i,\qquad
-   \hat{\pi}_m=\frac{1}{N_m}\sum_{i\in B_m} y_i.
-   $$
+$$
+\bar{p}_m=\frac{1}{N_m}\sum_{i\in B_m} p_i,
+\hat{\pi}_m=\frac{1}{N_m}\sum_{i\in B_m} y_i.
+$$
+
 4. Plot the points $(\bar{p}_m,\hat{\pi}_m)$, optionally joined by line segments.
    The diagonal $y=x$ is the ideal calibration line.
 
@@ -63,9 +64,9 @@ This compares predicted probabilities to the *true* event probabilities.
 * **When ground-truth probabilities $\pi_i=\Pr(Y=1\mid x_i)$ are known** (e.g., in simulations), scatter $(p_i,\pi_i)$ and compare to $y=x$.
 * **When $\pi_i$ is unknown** (real data), use a consistent estimate of $\Pr(Y=1\mid p)$ such as isotonic regression or local logistic smoothing:
 
-  $$
-  \tilde{\pi}(p)\approx \mathbb{E}[Y\mid P=p],\quad \text{then plot }\bigl(p_i,\tilde{\pi}(p_i)\bigr).
-  $$
+$$
+\tilde{\pi}(p)\approx \mathbb{E}[Y\mid P=p], \text{ then plot }\bigl(p_i,\tilde{\pi}(p_i)\bigr).
+$$
 
 Points above $y=x$ indicate under-confidence; below indicate over-confidence.
 

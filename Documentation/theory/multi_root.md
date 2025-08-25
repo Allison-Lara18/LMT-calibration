@@ -74,7 +74,7 @@ $$
 
 ### 2) Partition the space into regions
 
-* **If you cut $m$ distinct features with one threshold each** (e.g., $x_{f_1}\leq t_1$, $x_{f_2}\leq t_2$, …): you get $2^m$ axis-aligned, disjoint regions, one for every True/False combination of the $m$ “$\leq$” tests.
+* **If you cut $m$ distinct features with one threshold each** (e.g., $x_{f_1}\leq t_1$, $x_{f_2}\leq t_2$, …): you get $2^m$ axis-aligned, disjoint regions, one for every True/False combination of the $m \leq$ tests.
 
 * **If you allow multiple thresholds per feature** (say feature $j$ has $k_j$ thresholds), that feature is split into $k_j+1$ intervals
   $(-\infty, t_{j1}],\ (t_{j1}, t_{j2}],\ \ldots,\ (t_{j\,k_j}, \infty)$.  

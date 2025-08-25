@@ -13,7 +13,7 @@ Learn a decision tree for $y\in\{0,1\}$ where every internal split:
 
 ## 2) Setup and notation
 
-Data $D=\{(x_i,y_i)\}_{i=1}^n$, with $x_i=(x_{i,1},\dots,x_{i,d})\in\mathbb{R}^d$, $y_i\in\{0,1\}$.
+Data $D = \{ (x_i, y_i) \}_{i=1}^n$ , with $x_i = ( x_{i,1}, \dots , x_{i,d} ) \in \mathbb{R}^d$, $y_i \in \{ 0,1 \}$.
 
 For $a\in\mathbb{R}$, define the truncated linear (ReLU) term $(a)_+=\max\{0,a\}$.
 
@@ -56,9 +56,10 @@ Parameters $(\beta_0,\beta_1,\beta_2)$ are estimated by **logistic regression** 
 For each feature $j$ and candidate knot $\tau$ (e.g., percentiles of $\{\,x_{i,j}\,\}_{i\in\mathcal{I}}$; typically 10%–90% or unique midpoints):
 
 * define the **hard split**:
-  * Left child $\mathcal{I}_L=\{\, i\in\mathcal{I} : x_{i,j}\le \tau \,\}$,
-  * Right child $\mathcal{I}_R=\{\, i\in\mathcal{I} : x_{i,j}> \tau \,\}$.
-* enforce **minimum child size**: $|\mathcal{I}_L|\ge \texttt{min\_samples}$ and $|\mathcal{I}_R|\ge \texttt{min\_samples}$; otherwise the split is invalid.
+  * Left child $\mathcal{I}_L = \{ i \in \mathcal{I} : x_{i,j} \leq \tau \}$,
+  * Right child $\mathcal{I}_R = \{ i \in \mathcal{I} : x_{i,j} > \tau \}$.
+
+* enforce **minimum child size**: $|\mathcal{I}_L | \geq \text{min samples}$ and $|\mathcal{I}_R | \geq \text{min samples}$; otherwise the split is invalid.
 
 ---
 
@@ -68,15 +69,15 @@ Fit the GLM once for $(j,\tau)$ on the **parent** node’s data; compute its pre
 Evaluate a metric **within each child**:
 
 * **AUC** on $\mathcal{I}_L$ and $\mathcal{I}_R$ (requires at least one positive and one negative in the child; otherwise the child’s AUC is undefined and the split is skipped), or
-* **Brier score** $\mathrm{Brier}=\dfrac{1}{|\mathcal{I}_\bullet|}\sum_{i\in\mathcal{I}_\bullet}(p_i-y_i)^2$ for $\bullet\in\{L,R\}$.
+* **Brier score** $\text{Brier} = \frac{1}{|\mathcal{I}_\bullet|} \sum_{i \in \mathcal{I}_\bullet}(p_i-y_i)^2$ for $\bullet\in\{L,R\}$.
 
 Combine by size-weighted aggregation:
 
 $$
-\mathrm{Score}(j,\tau)=
+\text{Score}(j,\tau)=
 \begin{cases}
-\displaystyle \frac{n_L}{n}\,\operatorname{AUC}_L+\frac{n_R}{n}\,\operatorname{AUC}_R, & \text{maximize},\\[1.0em]
-\displaystyle \frac{n_L}{n}\,\mathrm{Brier}_L+\frac{n_R}{n}\,\mathrm{Brier}_R, & \text{minimize}.
+\displaystyle \frac{n_L}{n}\,\text{AUC}_L+\frac{n_R}{n}\,\text{AUC}_R, & \text{maximize},\\[1.0em]
+\displaystyle \frac{n_L}{n}\,\text{Brier}_L+\frac{n_R}{n}\,\text{Brier}_R, & \text{minimize}.
 \end{cases}
 $$
 
@@ -88,8 +89,8 @@ Select $(j^\star,\tau^\star)$ giving the **best** score (highest AUC or lowest B
 
 At a node with data $\mathcal{I}$, stop and return a leaf if any holds:
 
-1. depth $\ge$ `max_depth`;
-2. $n < 2 \times \texttt{min\_samples}$ (cannot form two valid children);
+1. depth $\geq$ `max_depth`;
+2. $n < 2 \times \text{min samples}$ (cannot form two valid children);
 3. $\text{purity} \ge$ `purity_threshold` (e.g., 0.95).
 
 The leaf prediction is the node’s class probability $\hat{p}=\bar{y}$ (or a calibrated GLM estimate if you keep the last fit).

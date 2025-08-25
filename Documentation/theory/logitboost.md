@@ -39,25 +39,28 @@ For each class $j$ and boosting round $m$:
 
 * We fit a **single-feature weighted linear model** $f_{mj}(x)=b_{0j}+b_{1j}\,x_{k_j}$ by minimizing
 
-  $$
-  \sum_{i=1}^{N} w_{ij}\,\bigl(z_{ij}-(b_{0j}+b_{1j}x_{ik})\bigr)^2
-  $$
-  **over all features $k$** and pick the feature $k_j$ that achieves the **smallest weighted squared error**.  
-  (In code: `_best_feature_lr(X, z, w)` loops over features, uses `LinearRegression(..., sample_weight=w)`, and returns the best $(k, b_0, b_1, \hat f)`.)
+$$
+\sum_{i=1}^{N} w_{ij}\,\bigl(z_{ij}-(b_{0j}+b_{1j}x_{ik})\bigr)^2
+$$
 
-* After fitting every class, stack the $J$ fitted vectors $\hat{f}_{mj}\in\mathbb{R}^N$, compute their mean across classes, and **center**:
-  $$
-  \tilde{f}_{mj}\;=\;\frac{J-1}{J}\,\Bigl(\hat{f}_{mj}-\frac{1}{J}\sum_{k=0}^{J-1}\hat{f}_{mk}\Bigr).
-  $$
-  This guarantees $\sum_j \tilde{f}_{mj}=0$ for each sample.
+  **over all features $k$** and pick the feature $k_j$ that achieves the **smallest weighted squared error**.  
+  (In code: `_best_feature_lr(X, z, w)` loops over features, uses `LinearRegression(..., sample_weight=w)`, and returns the best $(k, b_0, b_1, \hat{f})$ .)
+
+* After fitting every class, stack the $J$ fitted vectors $\hat{f}_{mj} \in \mathbb{R}^N$, compute their mean across classes, and **center**:
+
+$$
+\bar{f}_{mj} = \frac{J-1}{J} (\hat{f}_{mj} - \frac{1}{J} \sum_{k=0}^{J-1}\hat{f}_{mk})
+$$
+
+  This guarantees $\sum_j \bar{f}_{mj}=0$ for each sample.
 
 * Update scores and probabilities:
 
-  $$
-  F_j \leftarrow F_j + \tilde{f}_{mj},
-  \qquad
-  p \leftarrow \operatorname{softmax}(F).
-  $$
+$$
+F_j \leftarrow F_j + \bar{f}_{mj},
+p \leftarrow \text{softmax}(F).
+$$
+
   (In code: numerically stable softmax; probabilities are clipped to $[\varepsilon,\,1-\varepsilon]$ for safety.)
 
 **Complexity per round:** $O\big(J \cdot D \cdot N\big)$ for $J$ classes, $D$ features, $N$ samples, since for each class we fit $D$ one-dimensional weighted regressions and pick the best.
@@ -107,7 +110,7 @@ so the model is equivalent to a logistic regression in the **additive score** $F
 
 1. **Cross-validation:** For each fold, train LogitBoost for `n_estimators` rounds (fresh fit), and record the **misclassification error** on the validation split **at every round** $m=1,\ldots,M$.
 2. **Select $M^*$:** Average validation errors across folds; pick $M^*$ with the smallest mean error.
-3. **Final fit:** Train on **all** data for $M^*$ rounds. If a `warm_start` has at least $M^*$ rounds, truncate; otherwise continue training to reach $M^*$.
+3. **Final fit:** Train on **all** data for $M^{*}$ rounds. If a `warm_start` has at least $M^{*}$ rounds, truncate; otherwise continue training to reach $M^{*}$.
 
 **Returns:** `final_learners`, `J_node` (classes present in `y`), `M_star`, and the mean CV error curve `cv_errs_mean`.
 
