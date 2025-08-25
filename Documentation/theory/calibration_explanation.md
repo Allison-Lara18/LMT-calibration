@@ -18,7 +18,7 @@ This means that, whenever your model says "probability = p", roughly 30% of thos
 ### 2  How mis-calibration creeps in
 * **Optimising the wrong objective:** Training for accuracy, log-loss, or AUC cares about ordering of scores, not the numeric scale, so the model may end up over or under confident.
 * **Class imbalance:** With very few positives the learner plays it safe and parks most scores near 0 (or near 1 if positives dominate).
-* **Regularisation / early stopping:** Penalties that shrink coefficients (or unfinished training that leaves weights small) compress logits, whereas lack of regularisation can inflate them, yielding systematic bias.
+* **Regularization / early stopping:** Penalties that shrink coefficients (or unfinished training that leaves weights small) compress logits, whereas lack of regularisation can inflate them, yielding systematic bias.
 * **Dataset shift:** Prevalence or feature distribution changes between training and production.
 * **Post-processing thresholds:** Manually tweaking the decision cut-off to hit a precision/recall target distorts the mapping between raw score and true event rate, so probabilities away from that threshold become inaccurate.
 

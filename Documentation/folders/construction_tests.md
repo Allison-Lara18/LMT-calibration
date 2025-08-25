@@ -3,8 +3,8 @@
 > **What this is.**
 > This bundle walks from **concept → implementation → experiments** for **Logistic Model Trees (LMT)** and their LogitBoost core. Here are conceptual notebooks, a clean no–warm-start implementation (which is not the final one), and tests on **synthetic** (circles, noisy circles, spirals, known-probability DGP) and a **real** dataset (Breast Cancer). The emphasis is on **how the tree is built**, **how node-level logistic models are trained with LogitBoost**, and **how the resulting probabilities behave**.
 
-**Exact implementation:** `lmt_pkg/lmt_final_implementation.py` and `lmt_pkg/logitboost_j_implementation.py`
-**Concept notebooks:** `lmt_construction.ipynb`, `LogitBoost_explanation.ipynb`
+**Exact implementation:** `lmt_pkg/lmt_final_implementation.py` and `lmt_pkg/logitboost_j_implementation.py`. 
+**Concept notebooks:** `lmt_construction.ipynb`, `LogitBoost_explanation.ipynb`. 
 **Experiment notebooks:** `known_prob.ipynb`, `make_circles.ipynb`, `make_circles_noisy.ipynb`, `spiral.ipynb`, `breast_cancer.ipynb`
 
 ---

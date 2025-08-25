@@ -9,7 +9,7 @@
 * `known_prob_calibration copy.ipynb` *(variant/sandbox of the same flow)*
 * `visualization.ipynb`
 
-**Exact implementation:** `lmt_pkg/calibration?functions.py`
+**Exact implementation:** `lmt_pkg/calibration?functions.py`. 
 **Theory note:** `Documentation/theory/calibration_implementation.md`
 
 ---
@@ -17,12 +17,11 @@
 ## Key Concepts
 
 * **Why “known probability”?** With synthetic data you can write down $p^*(x)$. This lets you score calibration **without label noise**:
-
-  * **True-Brier:** $\mathbb{E}\big[(\hat p(x)-p^*(x))^2\big]$
-  * **True log-loss (cross-entropy to $p^*$):** $\mathbb{E}\big[-\,p^*(x)\log \hat p(x) - (1-p^*(x))\log(1-\hat p(x))\big]$
-  * **Population ECE:** bin by $\hat p$, compare $\overline{\hat p}$ vs $\overline{p^*}$ per bin.
-* **Empirical vs population metrics.** You can also compute the usual empirical metrics against labels $y\sim \text{Bernoulli}(p^*(x))$. Expect **higher variance** than the population (true-$p$) versions.
-* **What you compare.** Any probabilistic classifier(s): trees/LMT, logistic regression. Same interface: produce $\hat p(x)$, compute metrics vs $p^*$ and vs labels, and plot.
+  * **True-Brier:** $\mathbb{E}\bigl[(\hat{p}(x)-p^*(x))^2\bigr]$
+  * **True log-loss (cross-entropy to $p^*$):** $\mathbb{E}\bigl[-\,p^*(x)\,\log \hat{p}(x)\;-\;\bigl(1-\hat{p}(x)\bigr)\,\log\bigl(1-\hat{p}(x)\bigr)\bigr]$
+  * **Population ECE:** bin by $\hat{p}$, compare $\overline{\hat{p}}$ vs. $\overline{p^*}$ per bin.
+* **Empirical vs population metrics.** You can also compute the usual empirical metrics against labels $y\sim \operatorname{Bernoulli}\!\bigl(p^*(x)\bigr)$. Expect **higher variance** than the population (true-$p$) versions.
+* **What you compare.** Any probabilistic classifier(s): trees/LMT, logistic regression. Same interface: produce $\hat{p}(x)$, compute metrics vs. $p^*$ and vs. labels, and plot.
 
 ---
 
@@ -254,5 +253,5 @@ plt.show()
 * **Use both views.** Population metrics (vs $p^*$) reveal **true calibration**; empirical metrics reflect what you’d see in the wild and are noisier. Agreement between them is a strong signal.
 * **Seed sensitivity.** Re-run with different seeds; empirical curves will jitter, while population curves should stay stable.
 
-**Code location:** `lmt_pkg/calibration_functions.py`
-**Theory document:** `Documentation/theory/calibration_implementation.md`
+**Code location:** `lmt_pkg/calibration_functions.py`. 
+**Theory document:** `Documentation/theory/calibration_implementation.md`. 

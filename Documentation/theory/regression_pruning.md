@@ -2,31 +2,31 @@
 
 ## Setup and notation
 
-* $T$ is a **binary** tree. Each internal node $v$ has children $L(v),R(v)$; leaves have none.
-* Class set $\mathcal Y=\{1,\dots,C\}$ with $C\ge2$.
+* $T$ is a **binary** tree. Each internal node $v$ has children $L(v), R(v)$; leaves have none.
+* Class set $\mathcal{Y}=\{1,\dots,C\}$ with $C\ge 2$.
 * Each node $v$ carries its **own** LogitBoost model $M_v$, fitted during LMT induction on the node’s training reach set, and **frozen** during pruning.
 
-  * Let $F_v(x)\in\mathbb{R}^C$ be the additive score vector from LogitBoost and $p_v(x)=\mathrm{softmax}(F_v(x))\in\Delta^{C-1}$.
+  * Let $F_v(x)\in\mathbb{R}^C$ be the additive score vector from LogitBoost and $p_v(x)=\operatorname{softmax}\!\big(F_v(x)\big)\in\Delta^{C-1}$.
 * For labeled data $S=\{(x_i,y_i)\}_{i=1}^n$, the **reach set** of $v$ is
 
   $$
-  S_v=\{\,i:\;x_i\text{ routes to }v\,\},\qquad n_v:=|S_v|.
+  S_v=\{\, i :\; x_i \text{ routes to } v \,\},\qquad n_v:=|S_v|.
   $$
 
-  Collect the node probabilities as $P_{v,S_v}=[p_v(x_i)]_{i\in S_v}\in\mathbb{R}^{n_v\times C}$.
+  Collect the node probabilities as $P_{v,S_v}=\big[p_v(x_i)\big]_{i\in S_v}\in\mathbb{R}^{n_v\times C}$.
 
 ### Node AUC (explicit binary vs. multiclass rule)
 
 $$
-\mathrm{AUC}(M_v;S_v)=
+\mathrm{AUC}(M_v; S_v)=
 \begin{cases}
-\text{ROC-AUC}_{\text{binary}}\big(y_{S_v},\ s_{S_v}\big), & \text{if } C=2\text{ and both classes present},\\[4pt]
-\text{ROC-AUC}_{\text{macro OvR}}\big(y_{S_v},\ P_{v,S_v}\big), & \text{if } C>2\text{ and at least two classes present},\\[4pt]
+\text{ROC-AUC}_{\text{binary}}\!\big(y_{S_v},\, s_{S_v}\big), & \text{if } C=2 \text{ and both classes present},\\[4pt]
+\text{ROC-AUC}_{\text{macro OvR}}\!\big(y_{S_v},\, P_{v,S_v}\big), & \text{if } C>2 \text{ and at least two classes present},\\[4pt]
 1, & \text{if fewer than two classes present (random baseline).}
 \end{cases}
 $$
 
-* **Binary case ($C=2$)**: use the **standard** ROC AUC on a **1D score** $s_i:=p_v(x_i,\text{positive})$.
+* **Binary case ($C=2$)**: use the **standard** ROC AUC on a **1D score** $s_i := p_v\!\big(x_i,\, \text{positive}\big)$.
 * **Multiclass case ($C>2$)**: use **macro-averaged** one-vs-rest ROC AUC (scikit-learn: `multi_class="ovr", average="macro"`).
 
 Let $\delta$ be the pruning threshold.
@@ -125,7 +125,7 @@ $$
 
 **Inputs.**
 
-* Candidate thresholds $\Delta=\{\delta^{(1)},\dots,\delta^{(m)}\}$, folds $K$, pruning method (Node-Quality or Local-Gain), evaluation metric $\mathcal L\in\{$log-loss, Brier$\}$.
+* Candidate thresholds $\Delta=\{\delta^{(1)},\dots,\delta^{(m)}\}$, folds $K$, pruning method (Node-Quality or Local-Gain), evaluation metric $\mathcal{L}\in\{\text{log-loss},\ \text{Brier}\}$.
 
 **Procedure.**
 
@@ -134,8 +134,8 @@ $$
 3. **Pruning grid.** For each $\delta\in\Delta$:
 
    * Prune the trained tree **on $S_{\text{train}}^{(k)}$** using the chosen rule and the **piecewise Node AUC** above.
-   * Evaluate on $S_{\text{val}}^{(k)}$: get probabilities $\hat p_i$ from the pruned tree; compute $\mathcal L^{(k)}(\delta)$ (log-loss or Brier).
-4. **Fold best.** $\displaystyle \delta_k \in \arg\min_{\delta\in\Delta}\mathcal L^{(k)}(\delta)$.
+   * Evaluate on $S_{\text{val}}^{(k)}$: get probabilities $\hat{p}_i$ from the pruned tree; compute $\mathcal{L}^{(k)}(\delta)$ (log-loss or Brier).
+4. **Fold best.** $\displaystyle \delta_k \in \underset{\delta\in\Delta}{\arg\min}\ \mathcal{L}^{(k)}(\delta)$.
 5. **Final selection.** Mean of fold-bests (as specified):
 
    $$
@@ -147,8 +147,8 @@ $$
 
 ## Practical notes and edge cases
 
-* **Explicit AUC policy.** Binary targets → **standard** ROC AUC on 1D scores; multiclass targets → **macro OvR** ROC AUC. If a subset has <2 classes, use $1$.
-* **Reasonable $\delta$ ranges.** Node-Quality: $[0.5,1)$. Local-Gain: small $\delta\ge0$ (e.g., $0$–$0.02$).
+* **Explicit AUC policy.** Binary targets → **standard** ROC AUC on 1D scores; multiclass targets → **macro OvR** ROC AUC. If a subset has $<2$ classes, use $1$.
+* **Reasonable $\delta$ ranges.** Node-Quality: $[0.5,1)$. Local-Gain: small $\delta\ge 0$ (e.g., $0$–$0.02$).
 * **Strict comparisons.** Keep “$>\delta$” (prune) for Node-Quality and “$<\delta$” (prune) for Local-Gain for deterministic ties.
 * **No refitting.** Pruning **does not** re-train LogitBoost models; it only removes subtrees.
 * **Efficiency.** Precompute reach sets; each AUC is $O(n_v)$–$O(n_v\log n_v)$ depending on implementation.

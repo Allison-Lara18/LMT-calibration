@@ -3,8 +3,8 @@
 > **What this is.**
 > These notebooks prototype and compare two **post-growth pruning strategies** for decision trees (and LMT variants): a **custom AUC-threshold “regression pruning”** applied node-wise via BFS, and **scikit-learn’s cost-complexity pruning (CCP)** tuned by `ccp_alpha`. The goal is to see how each pruning rule simplifies trees while preserving decision boundaries and qualitative behavior.
 
-**Exact implementation:** `lmt_pkg/lmt_final_implementation.py`
-**Theory note:** `Documentation/theory/regression_pruning.md`
+**Exact implementation:** `lmt_pkg/lmt_final_implementation.py`. 
+**Theory note:** `Documentation/theory/regression_pruning.md`. 
 
 ---
 
@@ -163,5 +163,5 @@ lmt.plot_probability_surface_lmt(tree_pruned, node_models_pruned, X_train, featu
 plt.show()
 ```
 
-**Code location:** `lmt_pkg/lmt_final_implementation.py`
-**Theory document:** `Documentation/theory/regression_pruning.md`
+**Code location:** `lmt_pkg/lmt_final_implementation.py`. 
+**Theory document:** `Documentation/theory/regression_pruning.md`. 

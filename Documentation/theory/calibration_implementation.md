@@ -10,15 +10,15 @@ These show how predicted probabilities align with observed frequencies.
 
 **Construction**
 
-1. Partition $[0,1]$ into $M$ equal-width bins $I_m=\big(\tfrac{m-1}{M},\tfrac{m}{M}\big]$.
-2. Let $B_m=\{i: p_i\in I_m\}$ and $N_m=|B_m|$.
+1. Partition $[0,1]$ into $M$ equal-width bins $I_m=\bigl(\tfrac{m-1}{M},\,\tfrac{m}{M}\bigr]$.
+2. Let $B_m=\{\, i:\ p_i\in I_m \,\}$ and $N_m=|B_m|$.
 3. For each bin compute
 
    $$
-   \bar p_m=\frac{1}{N_m}\sum_{i\in B_m} p_i,\qquad
-   \hat\pi_m=\frac{1}{N_m}\sum_{i\in B_m} y_i.
+   \bar{p}_m=\frac{1}{N_m}\sum_{i\in B_m} p_i,\qquad
+   \hat{\pi}_m=\frac{1}{N_m}\sum_{i\in B_m} y_i.
    $$
-4. Plot the points $(\bar p_m,\hat\pi_m)$, optionally joined by line segments.
+4. Plot the points $(\bar{p}_m,\hat{\pi}_m)$, optionally joined by line segments.
    The diagonal $y=x$ is the ideal calibration line.
 
 **Reading the plot**
@@ -64,7 +64,7 @@ This compares predicted probabilities to the *true* event probabilities.
 * **When $\pi_i$ is unknown** (real data), use a consistent estimate of $\Pr(Y=1\mid p)$ such as isotonic regression or local logistic smoothing:
 
   $$
-  \tilde\pi(p)\approx \mathbb{E}[Y\mid P=p],\quad\text{then plot }(p_i,\tilde\pi(p_i)).
+  \tilde{\pi}(p)\approx \mathbb{E}[Y\mid P=p],\quad \text{then plot }\bigl(p_i,\tilde{\pi}(p_i)\bigr).
   $$
 
 Points above $y=x$ indicate under-confidence; below indicate over-confidence.

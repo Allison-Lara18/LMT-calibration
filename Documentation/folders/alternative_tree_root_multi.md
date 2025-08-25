@@ -3,8 +3,8 @@
 > **What this is.**
 > These two notebooks prototype and demonstrate an **alternative tree** that makes **multiple cuts at the root** (joint thresholds across features) and then grows a regular subtree inside each resulting region. You get a *tree-of-trees*: the root partitions the space in parallel, and each partition is handled by its own decision tree (and, optionally, a Logistic Model Tree variant with LogitBoost at internal nodes).
 
-**Exact implementation:** `lmt_pkg/composite_tree.py`
-**Theory note:** `Documentation/theory/multi_root.md`
+**Exact implementation:** `lmt_pkg/composite_tree.py`. 
+**Theory note:** `Documentation/theory/multi_root.md`. 
 
 ---
 
@@ -232,5 +232,5 @@ plt.show()
 
 ```
 
-**Code location:** `lmt_pkg/composite_tree.py`
-**Theory document:** `Documentation/theory/multi_root.md`
+**Code location:** `lmt_pkg/composite_tree.py`. 
+**Theory document:** `Documentation/theory/multi_root.md`. 

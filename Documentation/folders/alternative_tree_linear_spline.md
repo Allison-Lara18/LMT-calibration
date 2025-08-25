@@ -73,8 +73,9 @@
    * **Local gain rule:** `regression_pruning_gain_local(...)` keeps a split only if
 
      $$
-     \underbrace{\tfrac{n_l}{n}\text{AUC}_l+\tfrac{n_r}{n}\text{AUC}_r}_{\text{children (weighted)}}\;-\;\text{AUC}_\text{parent}\;\ge \;\delta .
+     \underbrace{\frac{n_l}{n}\,\operatorname{AUC}_l+\frac{n_r}{n}\,\operatorname{AUC}_r}_{\text{children (weighted)}}\;-\;\operatorname{AUC}_{\text{parent}}\;\ge\;\delta.
      $$
+
 
 3. **Cross-validation to pick δ**
 
@@ -239,5 +240,5 @@ plt.show()
 * **Look for elbows.** Cross-check δ at which **complexity** plateaus with δ minimizing **Brier/log-loss/ECE**; agreement is a strong selection signal.
 * **Seed sensitivity.** Fix random seeds when comparing methods and report variability; **local-gain + CV** typically reduces variance in the final choice.
 
-**Code location:** `lmt_pkg/spline_splitting.py`
-**Theory document:** `Documentation/theory/linear_spline_tree.md` and `Documentation/theory/regression_pruning.md`
+**Code location:** `lmt_pkg/spline_splitting.py`. 
+**Theory document:** `Documentation/theory/linear_spline_tree.md` and `Documentation/theory/regression_pruning.md`. 
