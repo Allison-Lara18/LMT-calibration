@@ -8,6 +8,7 @@
 
   * Let $F_v(x)\in\mathbb{R}^C$ be the additive score vector from LogitBoost and $p_v(x)=\text{softmax}\!\big(F_v(x)\big)\in\Delta^{C-1}$.
 * For labeled data $S=\{(x_i,y_i)\}_{i=1}^n$, the **reach set** of $v$ is
+
     $$
     S_v=\{\, i :\; x_i \text{ routes to } v \,\},\qquad n_v:=|S_v|.
     $$
@@ -19,8 +20,8 @@
 $$
 \mathrm{AUC}(M_v; S_v)=
 \begin{cases}
-\text{ROC-AUC}_{\text{binary}}\!\big(y_{S_v},\, s_{S_v}\big), & \text{if } C=2 \text{ and both classes present},\\
-\text{ROC-AUC}_{\text{macro OvR}}\!\big(y_{S_v},\, P_{v,S_v}\big), & \text{if } C>2 \text{ and at least two classes present},\\
+\text{ROC-AUC}_{\text{binary}}\bigl(y_{S_v},\, s_{S_v}\bigr), & \text{if } C=2 \text{ and both classes present},\\[4pt]
+\text{ROC-AUC}_{\text{macro OvR}}\bigl(y_{S_v},\, P_{v,S_v}\bigr), & \text{if } C>2 \text{ and at least two classes present},\\[4pt]
 1, & \text{if fewer than two classes present (random baseline).}
 \end{cases}
 $$
