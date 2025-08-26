@@ -90,15 +90,32 @@ Full LogitBoost + nested CV is slow.  Two heuristics help:
 
 ### 5  Experiments
 
-* **Datasets.**  36 diverse UCI sets (57–20 000 rows) with stratified 10×10-CV and a corrected resampled $t$-test .
-* **Competitors.**  C4.5, CART, Simple & full logistic, NBTree, Lotus, LTree, M5’(classification), AdaBoost(10/100) + C4.5, etc.
-* **Key findings.**
+* **Datasets & protocol.**
+  Comparisons were run on **36 UCI datasets** using **ten runs of stratified 10-fold cross-validation**, with **the same train/test splits shared across all methods**. This yields **100 data points per algorithm per dataset**, from which we report **means and standard deviations**.
 
-  * LMT **never loses significantly** to any base learner; often wins (e.g., 16 datasets vs C4.5) .
-  * Trees are *far* smaller than C4.5 or CART – sometimes pruned to a single root model.
-  * Outperforms or matches NBTree, LTree and Lotus on most sets .
-  * Competitive with boosted trees: wins on some, loses on others, but with a simpler single-tree explanation.
-  * Variable-selection SimpleLogistic beats full logistic in accuracy on many sets.
+* **Evaluation metrics (for algorithm comparison).**
+  It was **only** measured:
+
+  * **Training time (seconds)**
+
+  * **Accuracy**
+
+  * **Percentage of attributes used**
+
+  * **Tree size (number of leaves)**
+
+
+  > **Note on calibration.** These metrics do **not** assess probability calibration (e.g., Brier score, ECE, reliability curves). Since LMTs output probabilities, **calibration is crucial**; a key contribution of this project is to explicitly study **calibration quality** alongside accuracy and complexity.
+
+* **Competitors.**
+  C4.5, CART, Simple & full logistic regression, NBTree, Lotus, LTree, M5’ (classification), and AdaBoost (10/100) + C4.5, among others.
+
+* **Key findings (under the metrics above).**
+
+  * LMT is frequently **as accurate or more accurate** than single trees and plain logistic regression.
+  * **Models are compact** (often far fewer leaves than C4.5/CART) and can prune to a single global logistic model.
+  * Competitive with NBTree, LTree, and Lotus; trades wins/losses with boosted trees while keeping a single-model explanation.
+  * SimpleLogistic’s attribute selection tends to **use fewer predictors** than full logistic while maintaining or improving accuracy.
 
 ---
 
